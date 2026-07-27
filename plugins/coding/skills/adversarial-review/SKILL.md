@@ -46,7 +46,10 @@ When in doubt, it applies.
    **deleted** code (83 lines) rather than adding another guard. When each round adds a guard, you are
    treating symptoms; when a fix makes the change smaller, you have found the cause.
 5. **Verify a finding's *premise* before acting on it — a CHANGES-REQUESTED is not automatically right.**
-   The mirror of "an APPROVE is not a pass". A reviewer reasons from the diff and can be wrong about
+   Rebutting a premise takes **empirical proof** — a caller search, an execution trace, test output —
+   never an opinion that the finding seems wrong, and the proof goes in the PR reply under rule 3. This
+   rule raises the evidence bar on the author; it is not licence to dismiss an inconvenient finding.
+   With no proof to hand, treat the finding as correct. The mirror of "an APPROVE is not a pass". A reviewer reasons from the diff and can be wrong about
    the code around it, and its remedy is then wrong in a way that *looks* rigorous. In the run above, a
    finding argued a function must avoid `resolve()` because it "runs on the 60-second health poll". It
    did not — its only caller was the weekly backup job, which one `grep` for callers would have shown.
