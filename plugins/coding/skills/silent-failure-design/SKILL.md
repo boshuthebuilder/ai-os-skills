@@ -58,6 +58,11 @@ timestamp the control writes on every completed pass, and a separate check that 
 so "no pass completed in N intervals" becomes its own alarm. Without this, a control's silence is
 indistinguishable from its success, and the longer it stays dead the more reassuring it looks.
 
+When you are *building* a control, its liveness output is part of the requirement, not unrequested
+scope: "it can be shown to have run" is a property the thing must have to be a control at all, so it
+belongs in the change that creates it. That is different from retrofitting one to an existing control
+you merely noticed was silent — see *When you find one, fix the class*.
+
 **2 · Verify by artifact, never by exit code.** Ask what the control was supposed to *produce* and
 check for that: the posted comment, the written row, the published file, the recorded timestamp. Exit
 codes lie in both directions — headless CLIs exit 0 on auth failure, a swallowed exception returns
@@ -77,6 +82,12 @@ genuinely **cannot** occur, where a branch hides an impossible condition. A cont
 twenty-five things lives in the opposite case: some item failing is expected, and letting it abort the
 other twenty-four is precisely how the control becomes a silent no-op. Assert on the impossible;
 isolate *and report* the possible; swallow neither.
+
+And isolate on the **expected** failure, not on everything. A per-item `except Exception` re-creates
+the original bug one level down, quietly reclassifying a programming error — an `AttributeError` after
+a refactor, a typo'd attribute — as "that item failed". The watchdog above died on exactly such an
+error. Catch what an item can legitimately do to you (a timeout, an unreachable endpoint, a malformed
+row) and let anything else escape as the bug it is.
 
 **4 · A status vocabulary that separates *verified* from *unverified*.** Two states get wrongly
 collapsed into "fine":
@@ -117,9 +128,11 @@ Do that, and then ask why nothing noticed for however long it was broken. The in
 absent liveness signal is the defect.
 
 **This is not licence to widen the diff.** `implementation-discipline` binds here — *unrequested
-improvements become issues, not diff hunks* — so the change in front of you fixes the instance, and the
-missing liveness signal becomes a **filed issue** naming the control, what its silence looked like, and
-what would have made it visible. The point is that the class-level defect gets *recorded* rather than
+improvements become issues, not diff hunks* — so if the instance is what you were asked to
+fix, fix it and file the class; if you merely *noticed* it while doing something else, **file both** —
+the instance is no more in scope than the class, and a drive-by fix in an unrelated diff is the same
+violation wearing a helpful face. Either way the filed issue names the control, what its silence
+looked like, and what would have made it visible. The point is that the class-level defect gets *recorded* rather than
 forgotten the moment the instance stops hurting. Whether it is fixed now or next sprint is a scheduling
 decision; taking it silently inside an unrelated PR is not yours to make. A system that has had this failure once will have it again in a
 different mechanism, and only the general property — *dead looks different from healthy* — prevents
