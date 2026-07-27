@@ -77,6 +77,14 @@ change), **gate** (review the change):
   hunks), and the task restated as verifiable success criteria with a step-then-verify plan. The
   authoring-side counterpart of the review gate's scope-and-shape lens; binds every tier, and
   matters most where supervision is thinnest.
+- **`silent-failure-design`** — design and audit controls so that one which never ran is
+  distinguishable from one that ran and passed. The failure class where absence wears the appearance
+  of success: CI never scheduled, a watchdog whose exception is swallowed, a guard that cannot start
+  and so denies nothing, a test whose seam moved and now passes for the wrong reason, a skipped job
+  counted as a pass. One question asked of every control — *if this had never run, what would I
+  see?* — plus the four properties that make the answer differ from silence: a liveness signal, an
+  artifact-based success test, per-item error isolation, and a vocabulary separating verified from
+  unverified. Includes an audit checklist for existing systems.
 - **`adversarial-review`** — the cross-model review gate for every complex change: a *different*
   model from the one that wrote the code reviews the open PR adversarially and posts its findings
   as PR comments, iterating to convergence. Carries the author-agnostic reviewer chain
