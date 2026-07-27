@@ -40,17 +40,45 @@ When in doubt, it applies.
    verdict (APPROVE / CHANGES-REQUESTED) with findings as `file:line` + severity + why it is a real
    defect. The author replies on the PR addressing every finding — fixed, rebutted with evidence, or
    accepted-with-rationale — so the whole gate is auditable later.
-4. **Iterate to convergence.** Fix, push, re-review. Healthy rounds shrink (11 findings → 3 → 0).
-   A reviewer's own prescriptions can themselves introduce regressions — the next round exists to
-   catch exactly that.
-5. **A dead reviewer is a *done* reviewer.** A hang, timeout, rate-wall, or silent exit means that
+4. **Iterate to convergence, judged by whether a fix removes a *cause* — not by the finding count, and
+   not by diff size.** Fix, push, re-review. Rounds often shrink (11 findings → 3 → 0), but not always:
+   one gate ran 5 → 2 → 2 → 4 → 0 and the count carried no signal. The useful question is what a fix
+   *did*. Consolidating a decision that lived in two places, or deleting a special case, ends a whole
+   class of finding; bolting another guard beside the existing ones ends one instance and leaves the
+   next reviewer more surface to reason about. In that gate the converging round's fix happened to
+   delete 83 lines — but plenty of correct fixes legitimately **add** code (a missing liveness signal
+   per `silent-failure-design`, input validation, a counterexample folded in as a permanent test
+   vector), and **nothing here licenses stripping a safeguard to make a diff look convergent.** The tell
+   for symptom-patching is not size but **repetition**: successive rounds adding guards to the same
+   area, each needing its own reasoning about how it interacts with the last.
+5. **Verify a finding's *premise* before acting on it — a CHANGES-REQUESTED is not automatically right.**
+   Rebutting a premise takes **empirical proof** — a caller search, an execution trace, test output —
+   never an opinion that the finding seems wrong, and the proof goes in the PR reply under rule 3. This
+   rule raises the evidence bar on the author; it is not licence to dismiss an inconvenient finding.
+   With no proof to hand, treat the finding as correct. The mirror of "an APPROVE is not a pass". A reviewer reasons from the diff and can be wrong about
+   the code around it, and its remedy is then wrong in a way that *looks* rigorous. In the run above, a
+   finding argued a function must avoid `resolve()` because it "runs on the 60-second health poll". It
+   did not — its only caller was the weekly backup job, which one `grep` for callers would have shown.
+   The optimisation added to satisfy it caused **three** real defects in the next round; deleting it
+   converged immediately. Check the premise whenever the remedy **adds** complexity: that is precisely
+   when being wrong is expensive.
+6. **Watch for fix-induced findings, and treat a run of them as a signal.** Three of thirteen findings
+   in that gate existed *only* because of earlier fixes. Once you see the second one, stop patching and
+   look for the shared root — twice it was the same shape, one decision living in two places and
+   drifting. The remedy is a single home, which is a deletion, not a guard.
+7. **Point the harness at the PR you think you are reviewing.** Deriving a review invocation by copying
+   a previous one and substituting the number is how a reviewer ends up auditing a different, already-
+   merged PR while its instructions describe yours — a review that *appears* to have run, on the wrong
+   thing. Read back the resolved PR number before launching, and treat the verdict as void if the
+   posted comment is not on your PR.
+8. **A dead reviewer is a *done* reviewer.** A hang, timeout, rate-wall, or silent exit means that
    leg of the chain is finished for this round: advance to the next reviewer. Never retry in place,
    and never skip the gate because a tool misbehaved.
-6. **Re-assert your working branch** after any review tool runs — review CLIs can check out or
+9. **Re-assert your working branch** after any review tool runs — review CLIs can check out or
    strand the branch under you. The bundled `agy-review` harness removes this hazard at source by
    running the reviewer in an isolated worktree (see *The headless-reviewer contract*), but the rule
    still holds for the Codex leg and any CLI you drive raw in the live tree.
-7. **Scope and shape are findings.** The PR description is the stated intent (rule 2), and the diff
+10. **Scope and shape are findings.** The PR description is the stated intent (rule 2), and the diff
    is checked against it in both directions: a hunk that does not trace to the intent — a drive-by
    improvement, a reformat of passing lines — is a finding, and so is structure the change does not
    need — speculative abstraction, configurability without a second caller, handling for scenarios
@@ -126,11 +154,11 @@ which is why the idle Antigravity pool still leads and MiniMax follows it rather
    it like the Codex leg below. Two forms: when your driver is **Claude Code**, spawn a fresh subagent
    (the Task tool) with *no shared context*; otherwise run **`claude -p`** headless. Either way hand it
    ONLY the PR diff, the PR description, and a mandate to break the change — plus the scope-and-shape lens
-   (rule 7), which no reviewer reads off this page. Claude posts nothing itself: relay its findings with
+   (rule 10), which no reviewer reads off this page. Claude posts nothing itself: relay its findings with
    `gh pr comment`, naming the reviewer. Bound a `claude -p` run like any review CLI (see *Bounding a
    review CLI*). (If you ever drive this leg headlessly often enough to feel the hand-rolling, that pain —
    not symmetry with `agy-review` — is the trigger to build a `tools/claude-review` harness; until then a
-   speculative one is exactly the structure rule 7 says not to add.)
+   speculative one is exactly the structure rule 10 says not to add.)
 
 3. **Codex** — ineligible only when Codex authored the change. `codex review --base <main>` reviews the
    branch diff. Note it takes **no** custom prompt (`--base` and `[PROMPT]` are mutually exclusive), so
@@ -148,11 +176,11 @@ which is why the idle Antigravity pool still leads and MiniMax follows it rather
    one — a fourth vendor's model, separately trained. It draws its own **MiniMax subscription** (a
    Token/Coding plan), a budget independent of the Claude, ChatGPT and Antigravity plans, so it spends
    nothing the author or the other legs need. There is **no bundled harness** — build one only when the
-   hand-rolling is felt (rule 7); drive it like the Codex leg. The catch that shapes the prompt: `mmx text
+   hand-rolling is felt (rule 10); drive it like the Codex leg. The catch that shapes the prompt: `mmx text
    chat` is a **pure chat completion — no repo, `gh`, or tool access** — so, unlike agy/codex, it can fetch
    nothing itself. Hand it the whole change *inline*: run `gh pr diff <n> --repo owner/name` and `gh pr
    view <n> --repo owner/name` yourself and paste both (the diff + the stated intent) INTO the prompt,
-   alongside the break-it mandate and the scope-and-shape lens (rule 7) — name `--repo` on both so a
+   alongside the break-it mandate and the scope-and-shape lens (rule 10) — name `--repo` on both so a
    multi-checkout session diffs the right repo. Send the prompt on stdin as a JSON messages array
    (`echo '[{"role":"user","content":"…"}]' | mmx text chat --messages-file - --output json`), and bound
    the run (`--timeout <secs>`, wrapped in the watchdog of *Bounding a review CLI*). It posts nothing
@@ -426,7 +454,7 @@ and are the spec for porting the gate to a new reviewer:
   --detach`), so the reviewer's branch-switching is confined to a throwaway tree and the caller's
   checkout is never touched — you can keep editing while a review runs. It falls back (loud) to the
   caller's tree plus a before/after branch-restore guard only when a worktree cannot be made. This
-  is the structural fix for rule 6: prefer worktree isolation over re-asserting the branch after the
+  is the structural fix for rule 9: prefer worktree isolation over re-asserting the branch after the
   fact.
 - **Steer review labels to static reading — and steer the opening move.** Every label phrase that
   implies a tool is a landmine: "verify the shell fixes" sends the model to shellcheck; naming

@@ -4,6 +4,42 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v3.3.0 — 2026-07-27
+
+A **MINOR**: a new `coding` skill, **`silent-failure-design`**, and three additions to
+`adversarial-review`'s rules — both drawn from one week on a real deployment in which six separate
+controls were found to have silently stopped running.
+
+**New skill `silent-failure-design`.** The failure class where absence wears the appearance of
+success: a control that never ran produces the same observable output as one that ran and found
+nothing wrong. The six instances behind it are concrete — CI never scheduled because a conflicting PR
+has no merge ref (`gh pr checks` says "no checks reported", which reads as *not yet*); a watchdog that
+crashed on its first row inside a blanket `except: pass` with output to `DEVNULL`, printing
+`0 red row(s) pushed` exactly as a healthy system does; a fail-closed guard that could not start and
+therefore denied every read for weeks; a test whose monkeypatch seam moved during a refactor so it
+passed against the operator's *real production data*; a wholly-skipped workflow counted as a pass by a
+merge gate; and an adversarial review that posted a verdict on the wrong PR. Every one was found by
+accident. The skill is one question asked of any control — *if this had never run, what would I see?*
+— plus the four properties that make the answer differ from silence (a liveness signal separate from
+the finding, verification by artifact rather than exit code, per-item error isolation, and a status
+vocabulary that separates *verified* from *unverified* and *nothing failed* from *nothing ran*), an
+audit checklist for existing systems, and the instruction to fix the class rather than the instance.
+
+**`adversarial-review` rules 5, 6 and 7 are new**, and rule 4 is rewritten. Rule 4 previously measured
+convergence by a shrinking finding count; one gate ran 5 → 2 → 2 → 4 → 0, so the count carried no
+signal — what did was that the converging round's fix **deleted** 83 lines rather than adding another
+guard. Rule 5 is the mirror of "an APPROVE is not a pass": **a CHANGES-REQUESTED is not automatically
+right**, so verify a finding's *premise* before acting on it, especially when the remedy adds
+complexity — in that gate a finding asserted a function ran on a 60-second poll when one `grep` for
+callers showed it ran weekly, and the optimisation added to satisfy it caused three real defects in
+the next round. Rule 6 names **fix-induced findings** (three of thirteen there existed only because of
+earlier fixes) and says to stop patching and find the shared root once a second appears. Rule 7 says
+to point the harness at the PR you think you are reviewing — deriving an invocation by copying a
+previous one and substituting the number is how a reviewer audits a different, already-merged PR while
+its instructions describe yours. Later rules renumber accordingly, with cross-references updated.
+
+All three plugin manifests bump to 3.3.0 per the single-version-stream rule.
+
 ## v3.2.0 — 2026-07-23
 
 A **MINOR** to `adversarial-review`: a fourth reviewer leg, **MiniMax** (`mmx`). The fallback chain is now
