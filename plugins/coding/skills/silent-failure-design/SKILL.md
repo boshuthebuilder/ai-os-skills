@@ -11,8 +11,10 @@ description: >-
   and a status vocabulary that separates verified from unverified. Use when building or reviewing any
   guard, gate, watchdog, health check, backup, scheduled job or CI pipeline — and when diagnosing why
   something everyone believed was protecting them turns out not to have run for weeks. Pairs with
-  implementation-discipline (fail loud rather than handle the impossible) and adversarial-review (the
-  gate that is itself subject to this failure class).
+  implementation-discipline, which governs conduct while a change is written where this skill governs
+  whether the resulting control can be seen to work — the two are reconciled explicitly where they
+  touch, on per-item isolation and on scope — and with adversarial-review, the gate that is itself
+  subject to this failure class.
 ---
 
 # silent-failure-design
@@ -68,6 +70,14 @@ neither checked nor cleared — the whole control silently became a no-op becaus
 the system was broken. Isolate per item, report the failed one, keep going. A blanket
 `except Exception: pass` around a loop is this bug waiting to happen.
 
+*Report* is load-bearing: **isolation is not swallowing.** Each item still fails loudly on its own;
+only the *sweep* survives. This does not contradict `implementation-discipline`'s "an assertion that
+fails loudly beats a defensive branch that handles-and-continues" — that rule governs a state which
+genuinely **cannot** occur, where a branch hides an impossible condition. A control that checks
+twenty-five things lives in the opposite case: some item failing is expected, and letting it abort the
+other twenty-four is precisely how the control becomes a silent no-op. Assert on the impossible;
+isolate *and report* the possible; swallow neither.
+
 **4 · A status vocabulary that separates *verified* from *unverified*.** Two states get wrongly
 collapsed into "fine":
 - **"I could not check"** is not "it is healthy". A degraded, evicted, unreachable or not-applicable
@@ -82,7 +92,9 @@ see it, which is exactly when you most need the alert to stand.
 
 ## Auditing an existing system
 
-Cheap and high-yield, roughly in order:
+A standing audit of a running system — not a checklist for a single PR. Steps 3 and 5 in particular
+ask what a system has done *over time* and what its queries cannot see, which needs the deployment in
+front of you, not a diff. Cheap and high-yield, roughly in order:
 
 1. **Grep for the swallows**: `except.*:\s*pass`, `|| true`, `2>/dev/null`, `DEVNULL`, `catch {}`. For
    each, ask what state the system is in if that path is taken every time from now on. Some are
@@ -102,7 +114,14 @@ Cheap and high-yield, roughly in order:
 
 The instinct is to fix the instance — add the missing grant, correct the path, restore the trigger.
 Do that, and then ask why nothing noticed for however long it was broken. The instance is a bug; the
-absent liveness signal is the defect. A system that has had this failure once will have it again in a
+absent liveness signal is the defect.
+
+**This is not licence to widen the diff.** `implementation-discipline` binds here — *unrequested
+improvements become issues, not diff hunks* — so the change in front of you fixes the instance, and the
+missing liveness signal becomes a **filed issue** naming the control, what its silence looked like, and
+what would have made it visible. The point is that the class-level defect gets *recorded* rather than
+forgotten the moment the instance stops hurting. Whether it is fixed now or next sprint is a scheduling
+decision; taking it silently inside an unrelated PR is not yours to make. A system that has had this failure once will have it again in a
 different mechanism, and only the general property — *dead looks different from healthy* — prevents
 the next one.
 

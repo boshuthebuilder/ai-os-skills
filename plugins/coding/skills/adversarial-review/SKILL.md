@@ -40,11 +40,17 @@ When in doubt, it applies.
    verdict (APPROVE / CHANGES-REQUESTED) with findings as `file:line` + severity + why it is a real
    defect. The author replies on the PR addressing every finding — fixed, rebutted with evidence, or
    accepted-with-rationale — so the whole gate is auditable later.
-4. **Iterate to convergence — measured by a *simpler diff*, not a smaller finding count.** Fix, push,
-   re-review. Rounds often shrink (11 findings → 3 → 0), but not always: one gate ran 5 → 2 → 2 → 4 → 0,
-   and the count told you nothing. What did: the round that finally converged was the one whose fix
-   **deleted** code (83 lines) rather than adding another guard. When each round adds a guard, you are
-   treating symptoms; when a fix makes the change smaller, you have found the cause.
+4. **Iterate to convergence, judged by whether a fix removes a *cause* — not by the finding count, and
+   not by diff size.** Fix, push, re-review. Rounds often shrink (11 findings → 3 → 0), but not always:
+   one gate ran 5 → 2 → 2 → 4 → 0 and the count carried no signal. The useful question is what a fix
+   *did*. Consolidating a decision that lived in two places, or deleting a special case, ends a whole
+   class of finding; bolting another guard beside the existing ones ends one instance and leaves the
+   next reviewer more surface to reason about. In that gate the converging round's fix happened to
+   delete 83 lines — but plenty of correct fixes legitimately **add** code (a missing liveness signal
+   per `silent-failure-design`, input validation, a counterexample folded in as a permanent test
+   vector), and **nothing here licenses stripping a safeguard to make a diff look convergent.** The tell
+   for symptom-patching is not size but **repetition**: successive rounds adding guards to the same
+   area, each needing its own reasoning about how it interacts with the last.
 5. **Verify a finding's *premise* before acting on it — a CHANGES-REQUESTED is not automatically right.**
    Rebutting a premise takes **empirical proof** — a caller search, an execution trace, test output —
    never an opinion that the finding seems wrong, and the proof goes in the PR reply under rule 3. This
