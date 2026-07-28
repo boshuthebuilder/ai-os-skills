@@ -299,7 +299,19 @@ fi
 # backtick is just a backtick. Read-only by construction: the reviewer now has no write verb at all.
 REVIEW_BODY="$(mktemp "/tmp/agy-review-body-${PR}.XXXXXX")"
 # awk index(), not sed // — MARKER contains [brackets] that are regex metacharacters.
-awk -v m="$MARKER" 'index($0,m){f=1} f' "$OUT" >"$REVIEW_BODY" 2>/dev/null
+# Two rules keep EXTRACTION and VERIFICATION from diverging (count_marker_comments needs the body to
+# START with the marker, so anything that merely CONTAINS it would post fine and then be reported a
+# failure — the worst outcome: a real review on the PR and a typed no-comment to the caller):
+#   LAST occurrence, not first — narration that echoes the marker before the real review would
+#     otherwise drag that narration into the body;
+#   trim the marker line to begin AT the marker — the model may decorate it ('### <marker>', bold),
+#     and a decorated first line fails startswith() just as surely.
+awk -v m="$MARKER" '
+  index($0,m){ last=NR }
+  { line[NR]=$0 }
+  END{ if(!last) exit 1
+       for(i=last;i<=NR;i++){ s=line[i]; if(i==last) s=substr(s,index(s,m)); print s } }
+' "$OUT" >"$REVIEW_BODY" 2>/dev/null
 if [ -s "$REVIEW_BODY" ]; then
   # a watchdog kill can truncate mid-print; say so in the artifact rather than posting a partial
   # review as if it were whole.
