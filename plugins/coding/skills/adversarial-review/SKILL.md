@@ -376,10 +376,8 @@ to do* ("what exact command did you propose at the final step, and why?"), which
 opaque typed failure into the missing grant — and once revealed that the dying reviewer had been
 mid-way to a genuine defect the next leg later confirmed.
 
-**The relay salvage.** The posting step is the fragile one, and it fails in more than one way. The
-permission validator shell-parses the composed `--body`, so backticks, escape sequences, or nested
-quoting in an otherwise-legitimate comment can kill a run whose review is already complete; and more
-broadly, *any* command the config does not allow at the posting step — soft-denied in print mode
+**The relay salvage.** Posting is now the harness's job, so the backtick/quoting family of deaths is
+gone by construction (see *The reviewer never posts*). What remains is the read side: *any* command the config does not allow at the posting step — soft-denied in print mode
 rather than refused loudly — ends the run the same way, the exit-3-with-intact-grants shape whose
 narration tail shows a finished verdict (see *The fallback chain*). When an autopsy shows a finished verdict
 that simply failed to post, first ask the resumed run to re-post with a plainer body; if that is
@@ -429,15 +427,19 @@ and are the spec for porting the gate to a new reviewer:
   `uv run python -c` here — never an open-ended category: "a quick single-file check" invites
   `shellcheck` or `node --check` and trades this death for the un-granted-command one above. The
   same care belongs in your `--label`: "check the tests pass" walks the reviewer straight into this.
-- **Post with one inline call, and no backticks in the body.** The final `gh pr comment --body
-  "..."` must carry the body inline — staging it in a file via echo/printf/redirection/file-write
-  tools is denied and kills the run at the last step. And the permission validator parses
-  **backticks inside the body as command substitutions**, permission-checking their contents as
-  commands: a review comment that backticks any un-granted identifier (which is most of them) dies
-  at the posting step, while one whose snippets happen to start with granted words slips through —
-  the most confusing failure in the whole class. The prompt therefore bans backticks in the body
-  (code identifiers go in single quotes); a run that died here anyway can be salvaged by resuming
-  it and asking it to re-post without backticks (see *Follow-ups*).
+- **The reviewer never posts — the harness does.** This used to be the single most fragile step, and
+  it is now designed out. The model composes its review and simply *prints* it, ending with a line
+  carrying the run marker; `agy-review` captures that text and posts it with `gh pr comment
+  --body-file`. The reason is worth keeping: when the model posted its own review, the body
+  travelled as a shell argument, and agy's permission validator **parses that argument as shell** —
+  so a backtick in the comment read as a command substitution, got permission-checked as a command,
+  and soft-denied the run at the very last step, after a complete review. A code review is precisely
+  the text guaranteed to be full of backticks, so the old mitigation (a prompt rule banning them)
+  asked the model to suppress its strongest formatting habit exactly where it writes about code. It
+  lost that bet repeatedly — three times in a single session, each time with grants verifiably
+  intact, which is what made this the most confusing failure in the class. Captured as text, a
+  backtick is just a backtick. This is the *read-only by construction* rule applied to the reviewer:
+  it has no write verb at all now, so the failure cannot recur rather than being warned against.
 - **Ensure the reviewer's scratch clone exists and is fresh.** agy reviews in its own clone
   (`~/.gemini/antigravity-cli/scratch/<repo>`). Stale, a just-merged SHA does not exist there;
   *absent*, agy bootstraps one itself via commands outside the allow-list and dies silently at
