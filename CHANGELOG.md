@@ -4,6 +4,27 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v3.4.0 — 2026-07-28
+
+A **MINOR**: a new `ai-os` skill, **`file-preprocessing`** — staging-folder triage for batches of
+files that belong to no project yet (scans are the motivating case; any type is accepted).
+
+The method: an `_Inbox/` drop zone in a staging folder; understand each new file (read/OCR however
+the environment allows); build a **party-first** name deterministically from model-proposed fields
+(`<Party> - <DocType> <YYYY-MM-DD> <Detail>.<ext>`, fixed fallbacks, never a fabricated date); move
+it into a category subfolder under guards (containment, no symlink traversal, never-overwrite with
+deterministic suffixes, content-hash-verified moves); and maintain the **portable audit pair inside
+the folder** — `manifest.json`, the hash-keyed machine source of truth (schema
+`family-ai-preprocess-manifest/1`, authoritative definition in
+`plugins/ai-os/skills/file-preprocessing/references/manifest-schema.md`), and `AUDIT.md`, its
+derived human/cold-AI rendering. Entries are keyed by content hash, so identity survives renames,
+runs are incremental, removed files are flagged `departed` (never deleted from the audit), returned
+bytes are re-placed without model spend, and unreadable files land in `Needs Review/` unguessed.
+Hash-keyed idempotency is the interop property: an automated engine, a human hand-moving files, and
+any other agent following this skill can all work the same folder without stepping on each other.
+family-ai-os's `preprocess` engine (v1.42.0) is the reference implementation; this skill is the
+portable spec.
+
 ## v3.3.0 — 2026-07-27
 
 A **MINOR**: a new `coding` skill, **`silent-failure-design`**, and three additions to
