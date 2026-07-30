@@ -4,6 +4,32 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v3.5.0 — 2026-07-30
+
+A **MINOR**: `file-preprocessing` catches up with its reference implementation (family-ai-os
+v1.46.0) and gains the conveyor + attention model.
+
+- **Conveyor, not a library**: the drop zone is `Incoming/`; a run produces its own dated folder
+  under `Runs/`, carrying a manifest+audit *slice* with rebased paths, so a collected parcel
+  explains itself wherever it goes; the root pair is the long memory.
+- **"Needs a look" is a reasoned surface, never a dumping ground**: one per-run `Needs a look/`
+  folder whose SUBFOLDER is the reason (`Unrecognisable/` original name kept · `No date/` ·
+  `Too large/` terminal · `Flagged/` with the model's required `look`+`look_reason`); an
+  unexplained low confidence files normally; a file the model failed to answer for stays in
+  `Incoming/` and retries. `NEEDS A LOOK.md` is written only when the folder is non-empty.
+- **Split scans are re-joined**: marker-named odd/even halves (单数/双数, 奇数页/偶数页, "odd
+  pages" — never bare "odd"/"even") pair by stem, gate on interleavable page counts, merge into
+  one document; originals archive to the run's `_Archive/`; identity keys on the source-hash pair
+  (`merged_from`/`merged_into` in the schema), never the merged bytes.
+- **No arbitrary page caps**: probe first (page count + text-layer presence), tier the read, hand
+  a too-long scan to a vision-capable model whole, and end the ladder in a terminal visible stop.
+- **UK English naming by default**; hard-to-translate proper nouns keep both forms side by side.
+- **Fresh re-judging**: a re-processed file's own prior entry is excluded from any index shown to
+  the model — a stale verdict is never inherited.
+- Schema additions (`family-ai-preprocess-manifest/1`, backwards-compatible): `look_reason`,
+  `merged_from`, `merged_into`; flags `too_large` and `archived_half`; `partial_read` is legacy —
+  recognised, no longer produced.
+
 ## v3.4.0 — 2026-07-28
 
 A **MINOR**: a new `ai-os` skill, **`file-preprocessing`** — staging-folder triage for batches of
