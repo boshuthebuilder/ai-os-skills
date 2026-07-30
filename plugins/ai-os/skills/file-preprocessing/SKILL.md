@@ -80,8 +80,11 @@ Work through these steps; every step except **Understand** is deterministic.
    its recorded path; adopt human moves (same hash at a new path → update the entry's placement —
    the human won that argument); spot edited files (known path, new hash) and strays (unknown path
    and hash). In `Incoming/`: a hash already live in the tree is a **duplicate** — leave it and
-   note it; a hash whose entry is flagged `departed` is a **return** — re-place it from its own
-   recorded history with no model call; the rest are candidates. Refuse to start while any dropped
+   note it; a hash whose entry is flagged `departed` is a **return** — reuse its
+   recorded classification and filename with no model call, but place it into the CURRENT run's
+   parcel, never back into the departed parcel its history names (that parcel has been carried
+   off; recreating it would break the one-self-contained-parcel-per-run promise); the rest are
+   candidates. Refuse to start while any dropped
    file is still a cloud placeholder — a partial run splits one logical drop across two parcels.
 2. **Read — no arbitrary caps, a tiered ladder instead.** Extract text however the environment
    allows (a text read, OCR for scans/images, speech transcription for audio). Never truncate a
