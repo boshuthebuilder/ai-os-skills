@@ -34,6 +34,9 @@ the bytes, not the name: renames and moves update `current_path`, never the key.
 | `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null}` |
 | `connections` | list | `{to: <sha256 of a related entry>, relation: <why>}` — real relationships only |
 | `flags` | list of strings | named states, see below |
+| `look_reason` | string, optional | why this file needs a human decision, in the flagger's own words; absence ≡ `""` (every pre-v4 entry lacks it — consumers must treat missing as "no reason") |
+| `merged_from` | list, optional | on a merged split-scan document: the two source halves' sha256 ids |
+| `merged_into` | string, optional | on an archived split-scan half: the merged entry's sha256 id |
 | `first_seen` | string | ISO datetime the file first entered the manifest |
 | `processed_at` | string | ISO datetime of the last understanding pass |
 | `departed_at` | string, optional | present only while `departed` is flagged |
@@ -41,12 +44,19 @@ the bytes, not the name: renames and moves update `current_path`, never the key.
 ## Flags
 
 `low_confidence` (extraction was weak) · `unreadable` (no extractable text; filed to
-`Needs Review/` unguessed) · `partial_read` (only part of the document was read, e.g. a page cap) ·
+`Needs a look/Unrecognisable/` unguessed, original stem kept) · `too_large` (beyond every
+processing tier; filed to `Needs a look/Too large/`, terminal) · `archived_half` (an original
+half of a merged split scan, resting in the run's `_Archive/`) · `partial_read` (legacy: only part
+of the document was read under the old page cap — no longer produced, still recognised) ·
 `undated` (no trustworthy document date) · `unknown_party` (party fell back to `Unknown`) ·
 `departed` (the file is no longer anywhere in the folder; the entry is history, never deleted) ·
-`needs_a_look` (a human should double-check the reading or an operation on it was skipped).
+`needs_a_look` (a human decision is wanted — always accompanied by a non-empty `look_reason`).
 
-The vocabulary is extensible; consumers must ignore flags they don't know.
+The vocabulary is extensible; consumers must ignore flags they don't know. A merged split-scan
+document's entry id is still the merged file's own SHA-256 (the hash contract is uniform);
+**re-merge deduplication** rides the halves' own hash-keyed entries via `merged_from`/`merged_into`
+— necessary because PDF writers embed creation metadata, so the same halves never merge to
+identical bytes twice.
 
 ## Consumer rules
 
