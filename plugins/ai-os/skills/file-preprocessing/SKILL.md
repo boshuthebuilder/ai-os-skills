@@ -103,9 +103,15 @@ Work through these steps; every step except **Understand** is deterministic.
    id; the merged entry lists both in `merged_from`), so a re-dropped half is an ordinary
    duplicate of an already-filed file and the pair is never re-merged. That linkage — not the
    merged bytes — is what makes the merge deduplicable at all: PDF writers embed creation
-   metadata, so the same halves never merge to identical bytes twice. A marker-named file with no
-   twin, or a pair whose counts cannot interleave, files to `Needs a look/Flagged/` with that
-   reason.
+   metadata, so the same halves never merge to identical bytes twice. **A marker-named file whose
+   twin is not in this batch is a WAIT state, never an attention state**: it stays in `Incoming/`
+   untouched (markers intact, visibly counted as waiting) so a later drop — or the rest of a
+   bounded batch — can complete the pair; filing it now would rename away the very marker a
+   future pairing needs, splitting the document irreversibly. Only a pair whose counts cannot
+   interleave, or a merge that failed, is a human decision (`Needs a look/Flagged/`, reason
+   stated). **The originals archive in the same step that files the merged document, never
+   earlier** — if understanding the merged document fails, the halves must still be sitting in
+   `Incoming/` as ordinary candidates and no parcel may reference a document nobody filed.
 4. **Understand** (the only non-deterministic step). For each readable candidate, decide: `party`,
    `doc_type` (short English type), `doc_date` (from the document's own content, ISO, never
    invented), `detail`, `title`, a rich 2–3 sentence `summary`, `key_facts` (dates, amounts,
