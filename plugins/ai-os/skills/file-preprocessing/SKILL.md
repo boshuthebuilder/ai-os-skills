@@ -47,6 +47,10 @@ up; the root pair is the long memory that survives parcels leaving.
     NEEDS A LOOK.md                ← written ONLY when Needs a look/ is non-empty
 ```
 
+The run-folder name is minute-granular, so it must be **collision-safe by rule**: if the name
+already exists (two runs in one minute, an immediate retry), suffix deterministically —
+` (2)`, ` (3)`… — never reuse or overwrite an existing parcel.
+
 Reserved names (`Incoming`, `Runs`, `INSTRUCTIONS.md`, `manifest.json`, `AUDIT.md`,
 `NEEDS A LOOK.md`, dotfiles, and any `_`-prefixed system folder) are never treated as content.
 Pending vs done is visible at a glance: `Incoming/` empties as work completes.
@@ -93,10 +97,15 @@ Work through these steps; every step except **Understand** is deterministic.
    marker-named files whose remaining stems match; gate on page counts that can actually
    interleave (odd = even or even+1); interleave into ONE new document and process that as the work
    item; move both originals to the run's `_Archive/` with entries pointing at the merged entry.
-   **Identity for the merged document keys on the source-hash pair, never the output bytes**
-   (PDF writers embed creation metadata — the same halves never merge to identical bytes), so a
-   re-dropped half is an ordinary duplicate, never a re-merge. A marker-named file with no twin,
-   or a pair whose counts cannot interleave, files to `Needs a look/Flagged/` with that reason.
+   The merged entry's id is the merged FILE's own SHA-256, like every entry — the hash contract
+   and the move guards in step 6 are unchanged. **Re-merge deduplication works through the
+   halves**: each half keeps its own hash-keyed entry (`archived_half`, `merged_into` → the merged
+   id; the merged entry lists both in `merged_from`), so a re-dropped half is an ordinary
+   duplicate of an already-filed file and the pair is never re-merged. That linkage — not the
+   merged bytes — is what makes the merge deduplicable at all: PDF writers embed creation
+   metadata, so the same halves never merge to identical bytes twice. A marker-named file with no
+   twin, or a pair whose counts cannot interleave, files to `Needs a look/Flagged/` with that
+   reason.
 4. **Understand** (the only non-deterministic step). For each readable candidate, decide: `party`,
    `doc_type` (short English type), `doc_date` (from the document's own content, ISO, never
    invented), `detail`, `title`, a rich 2–3 sentence `summary`, `key_facts` (dates, amounts,

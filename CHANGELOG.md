@@ -4,10 +4,17 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
-## v3.5.0 — 2026-07-30
+## v4.0.0 — 2026-07-30
 
-A **MINOR**: `file-preprocessing` catches up with its reference implementation (family-ai-os
-v1.46.0) and gains the conveyor + attention model.
+A **MAJOR**: `file-preprocessing`'s folder contract changes. The drop zone renames `_Inbox/` →
+`Incoming/`, and processed files land in dated `Runs/<YYYY-MM-DD HHMM>/` parcels instead of
+category folders at the root — a v3.4 deployment that keeps dropping into `_Inbox/` would sit
+unprocessed, which is exactly the breaking-change bar AGENTS.md sets. **Migration:** rename
+`_Inbox` → `Incoming` (on the machine that owns the folder); existing root-level category folders
+need no move — the scan adopts files wherever their recorded paths still resolve, and anything
+relocated by hand is adopted as a human move on the next run.
+
+The rest of the release, with the reference implementation (family-ai-os v1.46.0):
 
 - **Conveyor, not a library**: the drop zone is `Incoming/`; a run produces its own dated folder
   under `Runs/`, carrying a manifest+audit *slice* with rebased paths, so a collected parcel
@@ -19,8 +26,11 @@ v1.46.0) and gains the conveyor + attention model.
   `Incoming/` and retries. `NEEDS A LOOK.md` is written only when the folder is non-empty.
 - **Split scans are re-joined**: marker-named odd/even halves (单数/双数, 奇数页/偶数页, "odd
   pages" — never bare "odd"/"even") pair by stem, gate on interleavable page counts, merge into
-  one document; originals archive to the run's `_Archive/`; identity keys on the source-hash pair
-  (`merged_from`/`merged_into` in the schema), never the merged bytes.
+  one document; originals archive to the run's `_Archive/`. The merged entry's id remains the
+  merged FILE's own SHA-256 (the hash contract and move guards are unchanged); **re-merge
+  deduplication** works through the halves' own entries (`merged_from`/`merged_into` linkage) —
+  needed because PDF writers embed creation metadata, so the same halves never merge to
+  identical bytes twice.
 - **No arbitrary page caps**: probe first (page count + text-layer presence), tier the read, hand
   a too-long scan to a vision-capable model whole, and end the ladder in a terminal visible stop.
 - **UK English naming by default**; hard-to-translate proper nouns keep both forms side by side.
