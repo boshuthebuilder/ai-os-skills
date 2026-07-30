@@ -159,7 +159,12 @@ Because entries are keyed by content hash and every mutation is guarded and reco
 idempotent and **agents compose**: an automated engine can do the bulk pass, a human can hand-move
 files (adopted next run), and any other AI following this skill can pick up the same folder and
 continue — same manifest, same naming, same semantics. Cost control on big backlogs: process a
-bounded batch per run (oldest first) and re-run; the manifest makes every pass incremental.
+bounded batch per run (oldest first) and re-run; the manifest makes every pass incremental. The
+bound must be **split-scan aware** or it starves: a waiting half must not consume a batch slot
+(oldest-first would re-select it every run, and with a small bound its twin — sitting just past
+the boundary — would never be admitted, deadlocking the queue), and a selected half pulls its
+twin into the same batch even from beyond the boundary, so a pair always travels together (the
+bound is a cost cap, not an exact count).
 
 The reference implementation is family-ai-os's `preprocess` engine (dashboard-triggered, chunked
 LLM calls under a context budget with parallel chunk reads and strictly ordered applies, on-device
