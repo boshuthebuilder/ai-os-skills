@@ -4,6 +4,21 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v4.2.2 — 2026-07-31
+
+A **PATCH** (reference implementation family-ai-os v1.48.2, same release as v4.2.1's sweeper).
+
+- **`file-preprocessing` — the look queue re-opens on fresh context.** A run carrying a pasted
+  operator note re-admits every look-flagged file for a fresh judgement without the force flag;
+  a resolved file moves into the current run's parcel, entry advancing in place, prior verdict
+  excluded from the prompt index. A bare run re-judges nothing.
+- **Operator-declared complete files.** A half-marker-named scan the context declares COMPLETE
+  (declared `complete:` front-matter, or extracted from prose through the same validators) is
+  exempted from pair detection — no merge hold, no lonely-half flag; the stated fact beats the
+  filename pattern.
+- **Audit lineage.** AUDIT.md records per-entry Merged from/into, Split from/into and
+  Straightened from/into, derived purely from manifest lineage fields.
+
 ## v4.2.1 — 2026-07-31
 
 A **PATCH** (reference implementation family-ai-os v1.48.2).
