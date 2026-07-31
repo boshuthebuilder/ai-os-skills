@@ -79,6 +79,19 @@ failed". Two consequences:
   retry — first automatically within the run, then across runs; they are never filed as
   judgements. A first-round failure the sweeper fully recovers from is a healed run, not an error;
   only a failure that leaves files behind colours the run status.
+- The look queue is OPEN QUESTIONS, and fresh operator context re-opens them: a run carrying a
+  pasted note re-admits every look-flagged file for a fresh judgement — no force flag (force is
+  for re-judging SETTLED filings; an open question never needs it). A resolved file moves into
+  the CURRENT run's parcel, its hash-keyed entry advancing in place; the prior verdict is
+  excluded from the prompt index like any candidate's, so it cannot contaminate the fresh one.
+  A run with no note re-judges nothing.
+- The operator's stated facts beat filename patterns: a file whose NAME claims half a split scan
+  (单数页/odd pages) but which the context declares a COMPLETE document is exempted from pair
+  detection entirely (declared `complete:` front-matter or extracted from prose through the same
+  validators) — no merge hold, no lonely-half flag, no odd-pages note.
+- The audit records HOW each document came to be, not just where it sits: per-entry
+  Merged from/into, Split from/into and Straightened from/into lines, derived purely from the
+  manifest's lineage fields.
 - A file lands under `Needs a look/` only with a **stated reason, and the subfolder IS the
   reason**: `Unrecognisable/` (no substantive read possible — keeps its original filename; there is
   nothing trustworthy to rename it by), `No date/` (a date exists on the document but could not be
