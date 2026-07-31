@@ -71,9 +71,14 @@ Pending vs done is visible at a glance: `Incoming/` empties as work completes.
 "Needs a look" means **"read, but a human should decide"** — it must never mean "processing
 failed". Two consequences:
 
-- A file the understanding step simply failed to answer for **stays in `Incoming/`** with no
-  manifest entry, and the next run retries it as an ordinary drop. Failures retry; they are not
-  filed.
+- A file the understanding step failed to answer for — omitted from a reply, or belonging to a
+  chunk that died on a timeout/exhausted backend — gets **one in-run sweeper retry**: the
+  unanswered files are re-asked in their own small chunk(s), with routing run fresh so a dead
+  backend's files retry on the next eligible one. Still unanswered, the file **stays in
+  `Incoming/`** with no manifest entry, and the next run retries it as an ordinary drop. Failures
+  retry — first automatically within the run, then across runs; they are never filed as
+  judgements. A first-round failure the sweeper fully recovers from is a healed run, not an error;
+  only a failure that leaves files behind colours the run status.
 - A file lands under `Needs a look/` only with a **stated reason, and the subfolder IS the
   reason**: `Unrecognisable/` (no substantive read possible — keeps its original filename; there is
   nothing trustworthy to rename it by), `No date/` (a date exists on the document but could not be

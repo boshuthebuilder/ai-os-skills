@@ -4,6 +4,19 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v4.2.1 — 2026-07-31
+
+A **PATCH** (reference implementation family-ai-os v1.48.2).
+
+- **`file-preprocessing` — unanswered files get one in-run sweeper retry.** A file the
+  understanding step failed to answer for (omitted from a reply, or in a chunk that died on a
+  timeout/exhausted backend) is re-asked once in its own small chunk(s) with routing run fresh —
+  a dead backend's files retry on the next eligible backend inside the same run. Still
+  unanswered, it defers to `Incoming/` exactly as before: deferral stays the floor, retry is the
+  first response. A first-round failure the sweeper fully recovers from reports a healed `ok`,
+  with the failed chunk row visible beside its retry row; only a failure that leaves files behind
+  colours the run status.
+
 ## v4.2.0 — 2026-07-31
 
 A **MINOR** with one called-out behaviour change (reference implementation family-ai-os v1.48.0).
