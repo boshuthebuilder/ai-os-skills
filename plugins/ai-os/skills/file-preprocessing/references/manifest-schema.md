@@ -32,11 +32,13 @@ the bytes, not the name: renames and moves update `current_path`, never the key.
 | `language` | string | primary language code (`en`, `zh`, …) |
 | `pages` | int or null | page count when known |
 | `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null}` |
-| `connections` | list | `{to: <sha256 of a related entry>, relation: <why>}` — real relationships only |
+| `connections` | list | `{to: <sha256 of a related entry>, relation: <why>}` — real relationships only, recorded on BOTH entries (an invoice's entry names the receipt exactly as the receipt's names the invoice) |
 | `flags` | list of strings | named states, see below |
 | `look_reason` | string, optional | why this file needs a human decision, in the flagger's own words; absence ≡ `""` (every pre-v4 entry lacks it — consumers must treat missing as "no reason") |
 | `merged_from` | list, optional | on a merged split-scan document: the two source halves' sha256 ids |
 | `merged_into` | string, optional | on an archived split-scan half: the merged entry's sha256 id |
+| `rotated_from` | string, optional | on a straightened (upright) copy of a sideways scan: the original's sha256 id |
+| `rotated_into` | string, optional | on the archived sideways original: the upright copy's sha256 id |
 | `first_seen` | string | ISO datetime the file first entered the manifest |
 | `processed_at` | string | ISO datetime of the last understanding pass |
 | `departed_at` | string, optional | present only while `departed` is flagged |
@@ -50,7 +52,9 @@ half of a merged split scan, resting in the run's `_Archive/`) · `partial_read`
 of the document was read under the old page cap — no longer produced, still recognised) ·
 `undated` (no trustworthy document date) · `unknown_party` (party fell back to `Unknown`) ·
 `departed` (the file is no longer anywhere in the folder; the entry is history, never deleted) ·
-`needs_a_look` (a human decision is wanted — always accompanied by a non-empty `look_reason`).
+`needs_a_look` (a human decision is wanted — always accompanied by a non-empty `look_reason`) ·
+`archived_original` (the sideways original of a straightened scan, resting in the run's
+`_Archive/`; `rotated_into` names the upright copy, whose own entry carries `rotated_from` back).
 
 The vocabulary is extensible; consumers must ignore flags they don't know. A merged split-scan
 document's entry id is still the merged file's own SHA-256 (the hash contract is uniform);

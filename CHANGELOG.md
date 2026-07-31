@@ -4,6 +4,36 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v4.1.0 — 2026-07-31
+
+A **MINOR**: `file-preprocessing` grows four additive capabilities (reference implementation
+family-ai-os v1.47.0); the folder contract, hash contract and every v4.0.0 behaviour are
+unchanged, so a v4.0.0 deployment keeps working untouched.
+
+- **The whole-batch reduce** (the second half of the fuller two-pass): after every group's
+  answers validate and before anything applies, one pass over each accepted entry's compact row
+  plus the prior-run index settles a batch-consistent category per file and records connections
+  **on BOTH entries** — bidirectional, including reverse links onto prior-run entries. Advisory:
+  a failed reduce leaves the groups' own judgements standing.
+- **Operator merge directives**: `INSTRUCTIONS.md` may open with a `---`-fenced YAML front-matter
+  declaring split-scan merge geometry (`even_first` for a pair whose first odd page is missing,
+  `reverse_odd`/`reverse_even` for a half scanned backwards). Stripped from the model-facing
+  body; validated strictly — a malformed or typo'd block refuses the run rather than being
+  silently ignored; the page gate is evaluated for the declared geometry.
+- **Sideways scans are straightened** (before pairing, so merges consume upright halves):
+  orientation decided from the reading DIRECTION of recognised lines — never recognition scores,
+  which are rotation-invariant on modern recognisers — and acted on only at a clear win. The
+  upright copy files; the sideways original rests in the run's `_Archive/` with
+  `rotated_from`/`rotated_into` lineage and the new `archived_original` flag, mirroring the merge
+  pair's contract.
+- **The date retry**: a `date_unreadable` verdict from a text-only read earns one bounded second
+  look with the actual file open before `No date/` ever sees it; only an answer with a real date
+  and no attention request replaces the original judgement.
+
+Schema additions (`manifest-schema.md`): entry fields `rotated_from`/`rotated_into`, flag
+`archived_original`, and the bidirectional-connections wording. All additive — consumers ignore
+unknown fields and flags by contract.
+
 ## v4.0.0 — 2026-07-30
 
 A **MAJOR**: `file-preprocessing`'s folder contract changes. The drop zone renames `_Inbox/` →
