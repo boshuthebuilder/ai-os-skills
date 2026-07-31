@@ -36,13 +36,17 @@ up; the root pair is the long memory that survives parcels leaving.
 ```
 <Staging Folder>/
   Incoming/            ← humans drop files here (nested drops fine)
-  INSTRUCTIONS.md      ← optional standing operator context, family-editable
+  INSTRUCTIONS.md      ← optional standing operator context, family-editable; may open with a
+                         ---fenced YAML front-matter of STRUCTURED engine directives (currently
+                         split-scan merge geometry), stripped from the model-facing body and
+                         validated strictly — a malformed or typo'd block refuses the run rather
+                         than being silently ignored
   manifest.json        ← maintained by this method (root memory)
   AUDIT.md             ← maintained by this method
   Runs/<YYYY-MM-DD HHMM>/          ← one folder per run — the parcel a run hands back
     <Category>/…                   ← processed files, one level of category folders
     Needs a look/<Reason>/…        ← ONLY files a human must decide about (see below)
-    _Archive/…                     ← originals of merged split scans
+    _Archive/…                     ← originals of merged split scans and straightened sideways scans
     manifest.json · AUDIT.md       ← this run's slice, paths rebased
     NEEDS A LOOK.md                ← written ONLY when Needs a look/ is non-empty
 ```
@@ -94,14 +98,40 @@ Work through these steps; every step except **Understand** is deterministic.
    read directly; past every tier, `Needs a look/Too large/` — a terminal, visible stop, never an
    infinite retry. A file with no extractable text at all is never guessed at: it goes to
    `Needs a look/Unrecognisable/` keeping its original stem, entry flagged `unreadable`.
-3. **Merge split scans.** A duplex-less scanner saves one document as two PDFs: odd pages and even
+3. **Straighten sideways scans — before pairing, so merges consume upright halves.** Decide the
+   clockwise correction (0/90/180/270) from the READING DIRECTION of the page's recognised text
+   lines, never from recognition scores (modern recognisers read text at any rotation nearly
+   equally well, so every orientation scores the same); vote weighted by characters over
+   confident lines, and act only on a clear win — a genuinely mixed page is left alone. Rewrite a
+   clear-verdict scan upright (a content-lossless page-rotation), re-extract it so OCR reads
+   upright pages, file the upright copy as the work item, and rest the sideways original in the
+   run's `_Archive/` — lineage `rotated_from` on the filed copy, `rotated_into` +
+   `archived_original` on the original, mirroring the merge pair's, and archived only once the
+   upright copy's own move lands. A failed orientation check is counted and the file proceeds
+   as-is — the check is an enhancement, never a hostage-taker.
+4. **Merge split scans.** A duplex-less scanner saves one document as two PDFs: odd pages and even
    pages, marked in the name (单数/双数, 奇数页/偶数页, 单页/双页, "odd pages"/"even pages" — an
    extensible marker table; never bare "odd"/"even", which appear in ordinary titles). Pair
    marker-named files whose remaining stems match; gate on page counts that can actually
-   interleave (odd = even or even+1); interleave into ONE new document and process that as the work
+   interleave — odd leads by default (odd = even or even+1), and an operator directive in the
+   `INSTRUCTIONS.md` front-matter can declare a pair **even-first** (its first odd page is
+   missing) and/or a half **scanned backwards**, with the gate evaluated for the declared
+   geometry:
+
+   ```yaml
+   ---
+   merge:
+     - match: "<substring of the marker-cleaned stem>"
+       order: even_first          # default odd_first
+       reverse_even: true         # and/or reverse_odd
+       note: "<free text, recorded in the audit>"
+   ---
+   ```
+
+   Interleave into ONE new document and process that as the work
    item; move both originals to the run's `_Archive/` with entries pointing at the merged entry.
    The merged entry's id is the merged FILE's own SHA-256, like every entry — the hash contract
-   and the move guards in step 6 are unchanged. **Re-merge deduplication works through the
+   and the move guards in step 8 are unchanged. **Re-merge deduplication works through the
    halves**: each half keeps its own hash-keyed entry (`archived_half`, `merged_into` → the merged
    id; the merged entry lists both in `merged_from`), so a re-dropped half is an ordinary
    duplicate of an already-filed file and the pair is never re-merged. That linkage — not the
@@ -111,11 +141,11 @@ Work through these steps; every step except **Understand** is deterministic.
    untouched (markers intact, visibly counted as waiting) so a later drop — or the rest of a
    bounded batch — can complete the pair; filing it now would rename away the very marker a
    future pairing needs, splitting the document irreversibly. Only a pair whose counts cannot
-   interleave, or a merge that failed, is a human decision (`Needs a look/Flagged/`, reason
-   stated). **The originals archive in the same step that files the merged document, never
+   interleave (under its declared geometry, when one is declared), or a merge that failed, is a
+   human decision (`Needs a look/Flagged/`, reason stated). **The originals archive in the same step that files the merged document, never
    earlier** — if understanding the merged document fails, the halves must still be sitting in
    `Incoming/` as ordinary candidates and no parcel may reference a document nobody filed.
-4. **Understand** (the only non-deterministic step). For each readable candidate, decide: `party`,
+5. **Understand** (the only non-deterministic step). For each readable candidate, decide: `party`,
    `doc_type` (short English type), `doc_date` (from the document's own content, ISO, never
    invented), `detail`, `title`, a rich 2–3 sentence `summary`, `key_facts` (dates, amounts,
    reference numbers actually read), `parties`, `category`, `connections` (real relationships to
@@ -123,35 +153,49 @@ Work through these steps; every step except **Understand** is deterministic.
    `look` + `look_reason` (see above), and honest flags. **Judge every file fresh from its
    content** — when re-processing a file the manifest already knows, exclude its own prior entry
    from any index shown to the model, so a stale verdict is never inherited; a rich summary is
-   incompatible with an "unreadable"-style title. **Name and describe in UK English by default**
+   incompatible with an "unreadable"-style title. **A `date_unreadable` verdict from a text-only
+   read earns one bounded second look with the actual file open before `No date/` ever sees it**
+   — the proven failure is an extraction that truncated a date a human reads at a glance; only an
+   answer with a real date and no attention request replaces the original judgement. **Name and
+   describe in UK English by default**
    (general terms translate; a hard-to-translate proper noun keeps both forms side by side, so the
    file stays findable by either); `INSTRUCTIONS.md` is the channel to ask otherwise. Reuse an
    existing category when one fits; create a new one only when none does (case-insensitively —
    "medical" must never mint a second "Medical"). The attention buckets ("Needs a look", legacy
    "Needs Review") are never categories the model may choose.
-5. **Name and place — deterministically, from the fields.** Filename pattern:
+6. **Reduce across the whole batch — after every group's answers validate, before anything
+   applies.** Understanding in bounded groups leaves two things no group can settle: category
+   consistency (a group's pick is an accident of packing) and relationships between files read in
+   different groups. One reduce pass over every accepted entry's compact row (id, prospective
+   filename, category, title, a short summary, date, parties) plus the prior-run index settles
+   both: re-route files whose category disagrees with how the whole batch hangs together (never
+   into an attention or archive placement — those are the engine's), and record the real
+   relationships **on BOTH entries** — an invoice knows its receipt exactly as the receipt knows
+   its invoice, including reverse links onto prior-run entries. Advisory by construction: a
+   failed reduce leaves the groups' own judgements standing.
+7. **Name and place — deterministically, from the fields.** Filename pattern:
    `<Party> - <DocType> <YYYY-MM-DD> <Detail>.<ext>` (e.g.
    `Jiayu - Lab Report 2026-03-14 CA125.pdf`). Fallbacks are fixed: unknown party → `Unknown`; no
    trustworthy date → the date segment is omitted, never fabricated; empty detail → omitted. Keep
    the extension, lowercased. Sanitise every segment (NFC-normalise; strip path separators,
    control characters, trailing dots/spaces; cap length in UTF-8 bytes — filesystem limits are
    byte limits). On a name collision append ` (2)`, ` (3)`… — never overwrite, never skip.
-6. **Move under guards.** Source and target must both stay inside the folder (refuse `..`,
+8. **Move under guards.** Source and target must both stay inside the folder (refuse `..`,
    absolute paths, and any symlinked path component). Create category/reason folders only when
    needed. After the move, verify the moved bytes' hash equals the entry id; a mismatch is a loud
    error, never a silent success. If the environment supports it, write a two-phase op log
    (intent → committed) fsync'd inside the folder (e.g. `.familyai/preprocess-log.jsonl`) and
    replay it on the next run so an interrupted move is resolved by content, and a committed move
    the manifest never learnt about is repaired from the log.
-7. **Record.** Merge each entry into `manifest.json` (atomic write). A re-understood file keeps its
+9. **Record.** Merge each entry into `manifest.json` (atomic write). A re-understood file keeps its
    identity fields (first seen, name history, placement) and refreshes the descriptive ones. An
    edited file is a new entry (new hash) understood **in place** — do not rename or move a file the
    human has already accepted under its name; the old entry departs.
-8. **Reconcile presence — against a full walk, never a limited subset.** Entries whose file is no
+10. **Reconcile presence — against a full walk, never a limited subset.** Entries whose file is no
    longer anywhere in the folder gain the `departed` flag with a last-seen stamp; entries are
    **never deleted** — the audit's history is the point. Under the conveyor model a whole run
    folder leaving is normal; its entries simply depart. A departed file's return sheds the flag.
-9. **Render the views** from the manifest: `AUDIT.md` (self-describing header, sections by
+11. **Render the views** from the manifest: `AUDIT.md` (self-describing header, sections by
    category, connections rendered to current filenames, "Needs a look" with each file's reason,
    "No longer present"), the run folder's manifest+audit slice, and `NEEDS A LOOK.md` when — and
    only when — the run's look folder is non-empty.
@@ -171,5 +215,5 @@ bound is a cost cap, not an exact count).
 
 The reference implementation is family-ai-os's `preprocess` engine (dashboard-triggered, chunked
 LLM calls under a context budget with parallel chunk reads and strictly ordered applies, on-device
-OCR + probe, a native interleave-merge tool); this skill is the portable spec any agent can execute
-by hand.
+OCR + probe + orientation, native interleave-merge and page-rotation tools); this skill is the
+portable spec any agent can execute by hand.
