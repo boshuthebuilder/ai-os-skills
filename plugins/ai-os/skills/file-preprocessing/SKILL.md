@@ -157,7 +157,9 @@ Work through these steps; every step except **Understand** is deterministic.
    human decision (`Needs a look/Flagged/`, reason stated). **The originals archive in the same step that files the merged document, never
    earlier** — if understanding the merged document fails, the halves must still be sitting in
    `Incoming/` as ordinary candidates and no parcel may reference a document nobody filed.
-5. **Split confident bundles.** One physical file sometimes holds several standalone documents
+5. **Split confident bundles** (the PROPOSAL comes from the non-deterministic Understand step;
+   everything this step itself does — validation and execution — is deterministic). One physical
+   file sometimes holds several standalone documents
    (five reminder letters scanned as one PDF). The understanding step may propose a `split` —
    page ranges plus per-part fields — ONLY when the boundaries are certain and each part has its
    own date/type/parties. The engine validates a strict partition (every page exactly once, in
