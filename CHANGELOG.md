@@ -4,6 +4,37 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v4.2.0 — 2026-07-31
+
+A **MINOR** with one called-out behaviour change (reference implementation family-ai-os v1.48.0).
+
+- **`file-preprocessing` — bundles split into their component documents** (new step 5): the
+  understanding step may propose page ranges + per-part fields only when boundaries are certain;
+  the engine validates a strict partition of every page and executes it whole or rejects it whole
+  (a rejected proposal files the bundle flagged, never a partial split). Lineage mirrors the merge
+  contract: `split_from`/`split_into` + the new `archived_bundle` flag, bundle archived only once
+  EVERY part's move lands.
+- **Themes segregate the run folder above categories** when the operator declares them:
+  `Runs/<ts>/<Theme>/<Category>/…`, files assigned against the declared list with unknowns in the
+  declared catch-all; the look surface and `_Archive/` stay at the run root. Entries carry an
+  optional `theme`.
+- **The pasted run note and the standing file are one context capability** behind one parser
+  (front-matter and all; malformed refuses naming its source; the note wins on collision) — and
+  the operator normally writes neither: the whole-batch planning call extracts merge geometry and
+  theme declarations from PLAIN PROSE through exactly the front-matter validators (declared wins
+  over extracted; misfires dropped with recorded reasons).
+- **BEHAVIOUR CHANGE — twinless split-scan halves file visibly** to `Needs a look/` under their
+  understood names with an engine-derived "(odd pages only)" note (entry keeps `original_name`,
+  marker intact, for a manual pair-up). Supersedes v4.0–4.1's invisible wait state, which
+  misled: "waiting" on a finished run implies the run will act later, and it never does.
+- **NEW dev-process skill `iterative-acceptance`** (coding plugin): the loop for building on
+  nondeterministic tools when expectations are discovered, not specified — frozen baseline with a
+  byte-identity invariant, predictions registered before each run and scored honestly, the
+  blank-slate protocol, misses-become-capabilities (never hacks for the test data), context in
+  the prompt vs fixes in code, iterate until the attention surface is near-empty.
+
+Schema additions are additive; consumers ignore unknown fields and flags by contract.
+
 ## v4.1.0 — 2026-07-31
 
 A **MINOR**: `file-preprocessing` grows four additive capabilities (reference implementation

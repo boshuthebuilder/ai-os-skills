@@ -39,6 +39,9 @@ the bytes, not the name: renames and moves update `current_path`, never the key.
 | `merged_into` | string, optional | on an archived split-scan half: the merged entry's sha256 id |
 | `rotated_from` | string, optional | on a straightened (upright) copy of a sideways scan: the original's sha256 id |
 | `rotated_into` | string, optional | on the archived sideways original: the upright copy's sha256 id |
+| `split_from` | string, optional | on a part extracted from a split bundle: the bundle's sha256 id |
+| `split_into` | list, optional | on an archived bundle: the parts' sha256 ids |
+| `theme` | string, optional | the declared theme (world) the file was assigned to, when the run declared themes |
 | `first_seen` | string | ISO datetime the file first entered the manifest |
 | `processed_at` | string | ISO datetime of the last understanding pass |
 | `departed_at` | string, optional | present only while `departed` is flagged |
@@ -54,7 +57,9 @@ of the document was read under the old page cap — no longer produced, still re
 `departed` (the file is no longer anywhere in the folder; the entry is history, never deleted) ·
 `needs_a_look` (a human decision is wanted — always accompanied by a non-empty `look_reason`) ·
 `archived_original` (the sideways original of a straightened scan, resting in the run's
-`_Archive/`; `rotated_into` names the upright copy, whose own entry carries `rotated_from` back).
+`_Archive/`; `rotated_into` names the upright copy, whose own entry carries `rotated_from` back) ·
+`archived_bundle` (a multi-document file split into its parts, resting in the run's `_Archive/`;
+`split_into` names the parts, whose own entries carry `split_from` back).
 
 The vocabulary is extensible; consumers must ignore flags they don't know. A merged split-scan
 document's entry id is still the merged file's own SHA-256 (the hash contract is uniform);

@@ -36,17 +36,24 @@ up; the root pair is the long memory that survives parcels leaving.
 ```
 <Staging Folder>/
   Incoming/            ← humans drop files here (nested drops fine)
-  INSTRUCTIONS.md      ← optional standing operator context, family-editable; may open with a
-                         ---fenced YAML front-matter of STRUCTURED engine directives (currently
-                         split-scan merge geometry), stripped from the model-facing body and
-                         validated strictly — a malformed or typo'd block refuses the run rather
-                         than being silently ignored
+  INSTRUCTIONS.md      ← optional standing operator context, family-editable. The per-run pasted
+                         note is the SAME capability behind the same parser: either channel may
+                         open with a ---fenced YAML front-matter of STRUCTURED engine directives
+                         (split-scan merge geometry; themes), stripped from the model-facing body
+                         and validated strictly — a malformed block refuses the run naming its
+                         source; a note-declared structure wins over a file-declared one. The
+                         operator normally writes NEITHER: the planning step extracts structure
+                         from plain prose (see the method), so context arrives as ordinary words
   manifest.json        ← maintained by this method (root memory)
   AUDIT.md             ← maintained by this method
   Runs/<YYYY-MM-DD HHMM>/          ← one folder per run — the parcel a run hands back
     <Category>/…                   ← processed files, one level of category folders
-    Needs a look/<Reason>/…        ← ONLY files a human must decide about (see below)
-    _Archive/…                     ← originals of merged split scans and straightened sideways scans
+    <Theme>/<Category>/…           ← only when the operator declared themes: worlds above the
+                                     categories, each file assigned against the declared list,
+                                     unknowns in the declared catch-all
+    Needs a look/<Reason>/…        ← ONLY files a human must decide about (see below) — always at
+                                     the run root, never per-theme
+    _Archive/…                     ← originals of merged split scans, straightened sideways scans, and split bundles
     manifest.json · AUDIT.md       ← this run's slice, paths rebased
     NEEDS A LOOK.md                ← written ONLY when Needs a look/ is non-empty
 ```
@@ -128,24 +135,39 @@ Work through these steps; every step except **Understand** is deterministic.
    ---
    ```
 
+   The planning step (step 7's whole-batch planning, which runs BEFORE this one) also extracts this
+   geometry from the operator's plain prose, so the operator normally writes no YAML at all —
+   extracted structure passes the same validators, and declared front-matter always wins.
    Interleave into ONE new document and process that as the work
    item; move both originals to the run's `_Archive/` with entries pointing at the merged entry.
    The merged entry's id is the merged FILE's own SHA-256, like every entry — the hash contract
-   and the move guards in step 8 are unchanged. **Re-merge deduplication works through the
+   and the move guards in step 9 are unchanged. **Re-merge deduplication works through the
    halves**: each half keeps its own hash-keyed entry (`archived_half`, `merged_into` → the merged
    id; the merged entry lists both in `merged_from`), so a re-dropped half is an ordinary
    duplicate of an already-filed file and the pair is never re-merged. That linkage — not the
    merged bytes — is what makes the merge deduplicable at all: PDF writers embed creation
    metadata, so the same halves never merge to identical bytes twice. **A marker-named file whose
-   twin is not in this batch is a WAIT state, never an attention state**: it stays in `Incoming/`
-   untouched (markers intact, visibly counted as waiting) so a later drop — or the rest of a
-   bounded batch — can complete the pair; filing it now would rename away the very marker a
-   future pairing needs, splitting the document irreversibly. Only a pair whose counts cannot
+   twin is not in this batch files VISIBLY**: it is understood like any file and lands in
+   `Needs a look/` under its understood name with an engine-derived "(odd pages only)"-style note
+   in the filename — an invisible wait state misleads ("waiting" on a finished run implies the
+   run will act later; it never does). The entry keeps `original_name` (marker intact), so a
+   human can still pair it by hand if the twin ever arrives. (Supersedes v4.0–4.1's wait-state
+   rule.) Only a pair whose counts cannot
    interleave (under its declared geometry, when one is declared), or a merge that failed, is a
    human decision (`Needs a look/Flagged/`, reason stated). **The originals archive in the same step that files the merged document, never
    earlier** — if understanding the merged document fails, the halves must still be sitting in
    `Incoming/` as ordinary candidates and no parcel may reference a document nobody filed.
-5. **Understand** (the only non-deterministic step). For each readable candidate, decide: `party`,
+5. **Split confident bundles.** One physical file sometimes holds several standalone documents
+   (five reminder letters scanned as one PDF). The understanding step may propose a `split` —
+   page ranges plus per-part fields — ONLY when the boundaries are certain and each part has its
+   own date/type/parties. The engine validates a strict partition (every page exactly once, in
+   order, ≥2 parts) and executes it whole or rejects it whole: a rejected proposal files the
+   bundle as ONE document flagged with the reason, never a partial split. Parts are validated
+   through the same entry path as any answer and flow through every later step; lineage mirrors
+   the merge contract — parts carry `split_from`, the bundle archives to the run's `_Archive/`
+   with `split_into` + the `archived_bundle` flag, and ONLY once every part's own move has
+   landed. Keep part names concise ("PAYE Statutory Payment Repayment"), never an inventory.
+6. **Understand** (the only non-deterministic step). For each readable candidate, decide: `party`,
    `doc_type` (short English type), `doc_date` (from the document's own content, ISO, never
    invented), `detail`, `title`, a rich 2–3 sentence `summary`, `key_facts` (dates, amounts,
    reference numbers actually read), `parties`, `category`, `connections` (real relationships to
@@ -163,8 +185,10 @@ Work through these steps; every step except **Understand** is deterministic.
    existing category when one fits; create a new one only when none does (case-insensitively —
    "medical" must never mint a second "Medical"). The attention buckets ("Needs a look", legacy
    "Needs Review") are never categories the model may choose.
-6. **Reduce across the whole batch — after every group's answers validate, before anything
-   applies.** Understanding in bounded groups leaves two things no group can settle: category
+7. **Reduce across the whole batch — after every group's answers validate, before anything
+   applies.** (Its sibling, the whole-batch PLANNING call, runs before the merge: it designs the
+   category vocabulary AND extracts operator structure — merge geometry, themes — from plain
+   prose through exactly the front-matter validators; declared always wins over extracted.) Understanding in bounded groups leaves two things no group can settle: category
    consistency (a group's pick is an accident of packing) and relationships between files read in
    different groups. One reduce pass over every accepted entry's compact row (id, prospective
    filename, category, title, a short summary, date, parties) plus the prior-run index settles
@@ -173,29 +197,29 @@ Work through these steps; every step except **Understand** is deterministic.
    relationships **on BOTH entries** — an invoice knows its receipt exactly as the receipt knows
    its invoice, including reverse links onto prior-run entries. Advisory by construction: a
    failed reduce leaves the groups' own judgements standing.
-7. **Name and place — deterministically, from the fields.** Filename pattern:
+8. **Name and place — deterministically, from the fields.** Filename pattern:
    `<Party> - <DocType> <YYYY-MM-DD> <Detail>.<ext>` (e.g.
    `Jiayu - Lab Report 2026-03-14 CA125.pdf`). Fallbacks are fixed: unknown party → `Unknown`; no
    trustworthy date → the date segment is omitted, never fabricated; empty detail → omitted. Keep
    the extension, lowercased. Sanitise every segment (NFC-normalise; strip path separators,
    control characters, trailing dots/spaces; cap length in UTF-8 bytes — filesystem limits are
    byte limits). On a name collision append ` (2)`, ` (3)`… — never overwrite, never skip.
-8. **Move under guards.** Source and target must both stay inside the folder (refuse `..`,
+9. **Move under guards.** Source and target must both stay inside the folder (refuse `..`,
    absolute paths, and any symlinked path component). Create category/reason folders only when
    needed. After the move, verify the moved bytes' hash equals the entry id; a mismatch is a loud
    error, never a silent success. If the environment supports it, write a two-phase op log
    (intent → committed) fsync'd inside the folder (e.g. `.familyai/preprocess-log.jsonl`) and
    replay it on the next run so an interrupted move is resolved by content, and a committed move
    the manifest never learnt about is repaired from the log.
-9. **Record.** Merge each entry into `manifest.json` (atomic write). A re-understood file keeps its
+10. **Record.** Merge each entry into `manifest.json` (atomic write). A re-understood file keeps its
    identity fields (first seen, name history, placement) and refreshes the descriptive ones. An
    edited file is a new entry (new hash) understood **in place** — do not rename or move a file the
    human has already accepted under its name; the old entry departs.
-10. **Reconcile presence — against a full walk, never a limited subset.** Entries whose file is no
+11. **Reconcile presence — against a full walk, never a limited subset.** Entries whose file is no
    longer anywhere in the folder gain the `departed` flag with a last-seen stamp; entries are
    **never deleted** — the audit's history is the point. Under the conveyor model a whole run
    folder leaving is normal; its entries simply depart. A departed file's return sheds the flag.
-11. **Render the views** from the manifest: `AUDIT.md` (self-describing header, sections by
+12. **Render the views** from the manifest: `AUDIT.md` (self-describing header, sections by
    category, connections rendered to current filenames, "Needs a look" with each file's reason,
    "No longer present"), the run folder's manifest+audit slice, and `NEEDS A LOOK.md` when — and
    only when — the run's look folder is non-empty.
