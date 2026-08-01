@@ -122,7 +122,18 @@ failed". Two consequences:
   validators) — no merge hold, no lonely-half flag, no odd-pages note.
 - The audit records HOW each document came to be, not just where it sits: per-entry
   Merged from/into, Split from/into and Straightened from/into lines, derived purely from the
-  manifest's lineage fields.
+  manifest's lineage fields. **A transformation whose output is consumed by a later step still has
+  to be recorded somewhere** — a scan straightened before being merged has its upright copy eaten
+  by the merge, so unless the straightening is written onto the archived original, the run reports
+  work the audit cannot account for. Reconcile the counts a run reports against what is recorded,
+  in a test.
+- **Every record of a location is reconciled against the folder, every run.** A record written once
+  and never re-checked drifts: a set-aside copy the operator deletes by hand stays advertised for
+  ever, and any count derived from that record climbs while the folder shrinks. Walkers cannot
+  catch this — they enumerate what EXISTS and this is an absence — so prune stale records at the
+  source, which is what keeps every reader (the scan, the audit, an index) honest without each
+  re-checking. Use ONE truth test for "is this still there"; two tests in one function is the smell
+  that precedes the drift.
 - A file lands under `Needs a look/` only with a **stated reason, and the subfolder IS the
   reason**: `Unrecognisable/` (no substantive read possible — keeps its original filename; there is
   nothing trustworthy to rename it by), `No date/` (a date exists on the document but could not be
