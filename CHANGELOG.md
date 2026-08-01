@@ -4,6 +4,21 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v4.3.0 — 2026-08-01
+
+A **MINOR** (reference implementation family-ai-os v1.49.0): the skill now says how a run should
+REPORT itself, not only how it should process files.
+
+- **Duplicate drops are set aside, not left unmentioned** — into the run's `_Duplicates/`, with the
+  three constraints spelled out (hash-keyed identity means no second entry; the runs walker means
+  the copy must be recorded or it is rediscovered for ever; a crash-recovery pass that repairs
+  committed moves means the move must declare it claims no placement).
+- **Report in the terms the counts mean**: files in vs documents out, provenance counted apart, and
+  the run's audit named by path — never a path that was not written.
+- **The audit pair splits by scope**: full detail per run folder, an index of runs at the root.
+- **A live run is visible as such**: liveness from the lock rather than the newest row, stage
+  published into the run's own row, and the final write replacing it.
+
 ## v4.2.2 — 2026-07-31
 
 A **PATCH** (reference implementation family-ai-os v1.48.2, same release as v4.2.1's sweeper).

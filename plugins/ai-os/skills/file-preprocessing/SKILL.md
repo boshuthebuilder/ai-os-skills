@@ -68,9 +68,40 @@ Pending vs done is visible at a glance: `Incoming/` empties as work completes.
 
 ## Needs a look — a reasoned surface, never a dumping ground
 
+**Report the run in the terms the counts actually mean.** Merging and splitting deliberately make
+"files in" and "documents out" differ, so state both — and count provenance (archived originals,
+set-aside duplicates) APART from output, or a merge that takes two halves and yields one document
+reads as no work done. Name WHERE the run's audit is rather than "see the audit": there is one per
+run folder and one at the root. Never name a path that was not written — a dry run creates no
+parcel, and a run can finish having applied nothing.
+
+**The audit pair splits by scope.** Each run folder's `AUDIT.md` carries the full detail of the
+files in it — including how each came to be (merged from, split from, straightened from, a
+duplicate set aside). The audit at the folder ROOT is an INDEX of runs, one line each: re-rendering
+every entry there duplicates each run's own audit, grows without bound, and describes files that
+leave the moment a run folder is carried away.
+
+**A run in flight must be visible as such.** If only one run can exist at a time, say so on the
+surface: report liveness from the LOCK the engine holds, never inferred from the newest run row —
+the engine takes the lock before it writes a row, and a refused dispatch writes none, so the row
+alone cannot distinguish "no run" from "a run we cannot see yet". Publish what the run is doing
+(stage, and a count for the long stages) into the run's own row, and let the FINAL write replace it
+so progress cannot outlive the run it describes. While a run is live, do not render a waiting count
+or a trigger the operator cannot act on.
+
 "Needs a look" means **"read, but a human should decide"** — it must never mean "processing
 failed". Two consequences:
 
+- **A file dropped again that is already filed is SET ASIDE, not filed twice and not left
+  loitering.** It moves to the run's `_Duplicates/` and the run reports how many. Three constraints
+  shape this and each is load-bearing: the manifest is keyed by CONTENT HASH, so the copy must get
+  **no entry of its own** (a second entry overwrites the filing it duplicates) — its location is
+  recorded on the KEPT entry instead; the runs walker descends the whole run tree, so that record is
+  also what stops the copy being rediscovered as a duplicate on every future run; and if the engine
+  has a crash-recovery pass that repairs committed moves into manifest placements, the move must
+  declare that it claims no placement, or the kept file's entry migrates onto the copy and the real
+  filing is orphaned. A forced re-processing run re-admits what is in the drop folder, so a copy
+  already set aside is not re-admitted — re-drop it.
 - A file the understanding step failed to answer for — omitted from a reply, or belonging to a
   chunk that died on a timeout/exhausted backend — gets **one in-run sweeper retry**: the
   unanswered files are re-asked in their own small chunk(s), with routing run fresh so a dead
