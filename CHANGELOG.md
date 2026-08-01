@@ -4,6 +4,19 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v4.3.1 — 2026-08-01
+
+A **PATCH** (reference implementation family-ai-os v1.49.4): two ways a record drifts from the
+folder it describes, both found in practice.
+
+- **A transformation consumed by a later step still needs recording** — a scan straightened before
+  a merge has its upright copy eaten by that merge, so the run counts work the audit cannot show
+  unless the straightening is written onto the archived original. Reconcile reported counts against
+  recorded ones in a test.
+- **Reconcile location records against the folder every run.** A record written once and never
+  re-checked drifts as soon as a human moves or deletes the file; walkers cannot see an absence, so
+  prune at the source rather than making each reader re-check. One truth test for existence, not two.
+
 ## v4.3.0 — 2026-08-01
 
 A **MINOR** (reference implementation family-ai-os v1.49.0): the skill now says how a run should
