@@ -4,6 +4,28 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v4.3.2 — 2026-08-01
+
+A **PATCH** (reference implementation family-ai-os v1.49.4): v4.3.1 named the two drifts but
+prescribed a reconciliation that is itself unsafe. Adversarial review of the implementation showed
+the fix could destroy the provenance it exists to protect, so the guidance is sharpened where it
+was wrong.
+
+- **"One truth test for existence" was the wrong lesson.** Judge records against what the walk
+  already OBSERVED — it has hashed the tree the records point into, so its digests answer *still
+  there* and *still this content* at once. A bare existence probe cannot see a path whose bytes
+  were replaced, and the record then claims for ever that a file is a copy of something it no
+  longer contains.
+- **Only a proven absence may retire a record.** `Path.exists()`-style helpers answer *false* for a
+  file that merely cannot be stat-ed, collapsing "gone" and "cannot tell" — so a transient
+  permission or I/O blip erases the user's provenance permanently. Keep the record on any other
+  error and say so.
+- **A path read out of a file is untrusted, even one you wrote.** Run records through the same
+  containment and symlink guards every other file-sourced path passes, and refuse an escaping one
+  *without* probing it.
+- **Count work where its record commits, not where the work is minted** — otherwise the
+  unaccountable count simply moves to the failure path.
+
 ## v4.3.1 — 2026-08-01
 
 A **PATCH** (reference implementation family-ai-os v1.49.4): two ways a record drifts from the

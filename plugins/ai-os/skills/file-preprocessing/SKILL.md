@@ -126,14 +126,32 @@ failed". Two consequences:
   to be recorded somewhere** — a scan straightened before being merged has its upright copy eaten
   by the merge, so unless the straightening is written onto the archived original, the run reports
   work the audit cannot account for. Reconcile the counts a run reports against what is recorded,
-  in a test.
+  in a test — and **count the work where its record COMMITS, not where the work is minted**, or the
+  same unaccountable claim simply moves to the failure path: a transformation whose document never
+  files leaves the user's originals to be redone next run, and reporting it as done is a lie the
+  audit cannot corroborate.
 - **Every record of a location is reconciled against the folder, every run.** A record written once
   and never re-checked drifts: a set-aside copy the operator deletes by hand stays advertised for
   ever, and any count derived from that record climbs while the folder shrinks. Walkers cannot
-  catch this — they enumerate what EXISTS and this is an absence — so prune stale records at the
+  catch this alone — they enumerate what EXISTS and this is an absence — so reconcile at the
   source, which is what keeps every reader (the scan, the audit, an index) honest without each
-  re-checking. Use ONE truth test for "is this still there"; two tests in one function is the smell
-  that precedes the drift.
+  re-checking. Three rules make that reconciliation safe, and each one exists because its absence
+  is a silent wrong answer:
+  - **Judge by what the walk OBSERVED, not by a fresh existence probe.** The walk has already
+    hashed the tree the records point into, so its digests answer both questions at once: is the
+    file still there, and is it still the content this record claims. Existence alone cannot see a
+    path whose bytes were replaced — the record then asserts for ever that a file is a copy of
+    something it no longer contains.
+  - **Only a PROVEN absence retires a record.** Retiring one is irreversible provenance loss about
+    the user's own document, so every uncertainty resolves to keep-and-say, never drop-and-forget.
+    Beware the language's convenience call: `Path.exists()`-style helpers answer *false* for a file
+    that merely cannot be stat-ed, collapsing "gone" and "cannot tell" into one answer — a
+    transient permission or I/O blip then erases provenance permanently. Distinguish
+    not-found from any other error, keep the record on the latter, and report it.
+  - **A path read out of a file is untrusted, even your own.** Records are joined to a root and
+    probed, so run them through the same containment and symlink guards every other file-sourced
+    path passes. A record that escapes the folder or has become a symlink cannot be one the engine
+    wrote: refuse it *without* probing it, and say so.
 - A file lands under `Needs a look/` only with a **stated reason, and the subfolder IS the
   reason**: `Unrecognisable/` (no substantive read possible — keeps its original filename; there is
   nothing trustworthy to rename it by), `No date/` (a date exists on the document but could not be
