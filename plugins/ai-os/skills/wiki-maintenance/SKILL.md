@@ -212,6 +212,14 @@ page carrying a legacy alias, migrate it to the canonical key.
 - **State only what the source says, exactly.** Quote the specific figure/status; never round up,
   generalise, or infer beyond the document. If a status page shows *Drive 1 Bad, Drive 2 Good*, say that —
   never "both drives bad". If unsure of a detail, leave it out.
-- **A true action is rare.** Treat something as an action only if it genuinely needs the owner to *do*
-  something soon **and** is clearly relevant. A filing summary, an FYI, or a figure from a statement is
-  informational — it shouldn't interrupt. When in doubt, inform quietly or say nothing.
+- **An observation is a wiki write, not an alert.** Before surfacing anything, ask the question that
+  decides it: **is there a physical act the owner must perform that this system cannot?** Not "is this
+  important" — importance is why you write it down, not why you interrupt. If there is such an act,
+  name it: one sentence, the exact file or place. If there is not, record it and say nothing; the page
+  you just wrote is where it will be read.
+  Qualifies: deleting a file the job may not delete, opening something the pipeline cannot read, a
+  decision only the household holds. Does not: a discrepancy already recorded on the page, something
+  the next pass finishes unaided, anything whose resolution is "wait and see".
+  This replaces the older "a true action is rare — when in doubt, inform quietly". Adverbs are
+  re-judged every run; "who can act on this" has an answer. A live queue running the old wording
+  reached eight open alerts of which five were observations the wiki had already recorded better.

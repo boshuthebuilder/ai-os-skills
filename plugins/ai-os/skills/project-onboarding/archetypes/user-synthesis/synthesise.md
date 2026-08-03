@@ -73,6 +73,28 @@ Rules:
   account/policy number, a date — re-find it on the source page shown in the report and copy it exactly;
   never transcribe such a figure from memory, and if it isn't shown this run, name the page it lives on
   rather than quoting a value. (Figures you derive yourself — a count, a total — are fine.)
+- **An observation is a wiki write, not an alert.** Before you put anything in `needs_a_look`, ask the
+  only question that decides it: **is there a physical act the owner must perform that this system
+  cannot?** Not "is this important" — importance is why you write it down, not why you interrupt. If
+  there is such an act, name it in `owner_action`, in one sentence, with the exact file or place. If
+  there is not, `owner_action` is **null**: the item is recorded, and the page you just wrote is where
+  it will be read.
+  Qualifies: deleting a file the job may not delete, opening something the pipeline cannot read, a
+  decision only the household holds the answer to.
+  Does NOT qualify: a discrepancy you have already recorded on the page; something the next run can
+  finish unaided; a gap nobody must act on today; anything whose resolution is "wait and see".
+  This REPLACES the older "a true action is rare" calibration, which the reference implementation ran
+  for months while its queue filled with observations. "Rare", "soon" and "clearly relevant" are
+  judgements a model re-makes differently every run; "is there an act only the owner can do" has an
+  answer. In one review of a live queue, five of eight open alerts were observations the wiki had
+  already recorded — better, and more currently, than the alert did.
+- **If you cite an open item, supersede it or say why both stand.** Writing "this sits alongside the
+  still-open discrepancy (open action 4123)" and leaving 4123 open is not a citation, it is a
+  duplicate: two rows, one thread, the older and narrower one still there. That exact pair sat in a
+  live queue for eleven days, the stale one filed at a HIGHER priority than the item that subsumed it.
+  If yours covers what an open one covers, retract it; a replacement must inherit at least the
+  priority it retires, so nothing sinks by being replaced. If both genuinely stand, say in one clause
+  what the open one carries that yours does not.
 - **Do not re-raise a known item.** The report's `previously_raised` ledger lists items already surfaced
   to the human, each with a status: **open** and **dismissed** items you must not repeat — reference
   them; a **recently-resolved** item you may reopen only if its evidence has since changed (then say
@@ -91,7 +113,7 @@ Return JSON only, matching this shape (every `wiki_pages[].path` must sit under 
 {
   "verdict": "apply | skip",
   "wiki_pages": [{"path": "01 Knowledge/...", "action": "create | update", "body": "..."}],
-  "needs_a_look": [{"item": "...", "reason": "...", "what_would_resolve": "one sentence — the single decision or action that closes this", "proposed_action": "optional — what you would do on a yes"}],
+  "needs_a_look": [{"item": "...", "reason": "...", "owner_action": "null, OR one sentence naming the physical act only the owner can perform — name the exact file or place", "what_would_resolve": "one sentence — the single decision or action that closes this", "proposed_action": "optional — what you would do on a yes"}],
   "log_entry": "## [{date}] synthesise | <projects read> | <short summary>",
   "notify": {"kind": "info | action", "priority": "low", "body": "..."}
 }
