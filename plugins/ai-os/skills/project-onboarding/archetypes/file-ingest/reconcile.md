@@ -83,6 +83,8 @@ Reconcile the wiki **to the files**:
    to the human, each with a status — **do not re-raise an open or dismissed one**; reference it. Reopen
    a **recently-resolved** item only if its evidence has since changed (and say what changed); otherwise
    leave it out (silence means "nothing new").
+**An observation is a wiki write, not an alert** — a `needs_a_look` carries an `owner_action` only when there is a physical act the owner must perform that this system cannot (the exact file or place, in one sentence); otherwise `owner_action` is null and the item is recorded, not queued, because the page you just wrote is where it will be read. **If you cite an open item, supersede it or say why both stand.** Both rules are stated in full in the archetype's other template.
+
 8. Append a dated `log_entry` summarising the reconcile. **A no-change run is silent** — if you changed
    no page and raised nothing, omit `notify` entirely.
 
@@ -95,7 +97,7 @@ Return JSON only — every `wiki_pages[].path` must start with `{wiki_dir}/`:
 {
   "verdict": "apply | skip",
   "wiki_pages": [{"path": "{wiki_dir}/...", "body": "..."}],
-  "needs_a_look": [{"item": "...", "reason": "...", "what_would_resolve": "one sentence — the single decision or action that closes this", "proposed_action": "optional — what you would do on a yes"}],
+  "needs_a_look": [{"item": "...", "reason": "...", "owner_action": "null, OR one sentence naming the physical act only the owner can perform — name the exact file or place", "what_would_resolve": "one sentence — the single decision or action that closes this", "proposed_action": "optional — what you would do on a yes"}],
   "log_entry": "## [{date}] reconcile | ...",
   "notify": {"priority": "low", "body": "..."}
 }

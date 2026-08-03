@@ -203,6 +203,20 @@ detail — any AI-OS deployment reproduces the defect unless the spec requires t
 - **Escalations are decidable in one step.** Each carries a `what_would_resolve` — one sentence naming
   the single decision or action that closes it — and, where the job can name it, an optional
   `proposed_action`. A bare "please check this" is not an escalation; it is noise.
+- **An observation is a wiki write, not an alert.** An item is *raised* only when there is a physical
+  act the owner must perform that the system cannot; that act is named in `owner_action`. Otherwise
+  `owner_action` is null, the item is **recorded** rather than queued, and the page the run wrote is
+  where the observation is read. The two fields are not duplicates and the difference is the whole
+  mechanism: `what_would_resolve` is what makes the item stop being true — which a later run, or the
+  clock, may satisfy — while `owner_action` is the part of that only a person can do. So
+  `owner_action` is always a subset of `what_would_resolve`, and its **null** is the load-bearing
+  value: it is the one thing `what_would_resolve` cannot express, because "Jiayu's page is updated
+  after the appointment" is a real resolution that asks nothing of anybody today.
+  This supersedes the calibration it replaces ("a true action is rare; when in doubt, inform quietly").
+  A rule phrased in adverbs is re-judged every run; a rule phrased as a question about who can act has
+  an answer. The reference implementation ran the older wording for months and still reached a queue
+  where five of eight open alerts were observations its own wiki had already recorded more currently
+  than the alert did.
 
 This closes the loop the gate opened: the gate decides whether to spend a model call; the ledger
 decides whether a *finding* is new. Together they are why a healthy folder is both cheap and quiet —

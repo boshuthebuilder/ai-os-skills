@@ -101,6 +101,26 @@ The same discipline applies to *clearing*: only a confirmed-good observation may
 control that clears on "not currently red" will silently close a live problem the moment it cannot
 see it, which is exactly when you most need the alert to stand.
 
+**A default cannot fail, so a default is never a decision.** The failure class above is a control that
+did not run; this is its quieter twin — a control that ran, on a value nobody chose. Where a routing
+or safety parameter has a sensible default, an omitted argument and a deliberate one are byte-identical
+at the call site, so the wrong answer produces no error, no log line and no diff to review. Ask the
+question of the *parameter*: **if the caller had never thought about this, what would I see?** If the
+answer is "the same thing I see now", the default is a silent failure waiting for its first caller who
+should have chosen differently.
+
+A live instance: a notification lane defaulted to `household`, one sender omitted it, and an
+infrastructure alert addressed to the operator sat in a family's queue for eleven days. Nothing was
+broken, nothing was logged, and the earlier work that built the operator lane had simply missed one
+call site — invisibly, because a default cannot fail.
+
+The remedy is to make omission *loud at the boundary you already own*: not a runtime exception (too
+late, and it fails production for a wiring mistake), but a structural test that enumerates the call
+sites and fails on any that did not state the value. An AST walk over every construction of the type,
+asserting the parameter is present, converts "someone forgot" from an invisible default into a red
+build — and it costs nothing at run time. Prefer this to removing the default outright when the
+default is genuinely right for most callers; the goal is a *stated* choice, not a burdensome one.
+
 ## Auditing an existing system
 
 A standing audit of a running system — not a checklist for a single PR. Steps 3 and 5 in particular

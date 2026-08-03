@@ -4,6 +4,42 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v5.0.0 — 2026-08-03
+
+A **MAJOR** (reference implementation family-ai-os v1.50.7): a semantic change to a documented rule.
+"A true action is rare" is replaced by a test with an answer, in every template and skill that carried
+it. The reference implementation ran the old wording for months and still arrived at a queue of eight
+open alerts of which **five were observations its own wiki had already recorded** — more currently,
+and better hedged, than the alert did. Its owner reviewed them one by one and wanted no decision from
+himself on seven.
+
+- **An observation is a wiki write, not an alert.** An item is raised only when there is a physical
+  act the owner must perform that the system cannot, named in a new **`owner_action`**. Otherwise
+  `owner_action` is null, the item is *recorded* rather than queued, and the page the run wrote is
+  where the observation is read. "Rare", "soon" and "clearly relevant" are judgements a model re-makes
+  differently every run; "is there an act only the owner can do" has an answer.
+- **`owner_action` and `what_would_resolve` are not duplicates**, and the difference is the mechanism.
+  `what_would_resolve` is what makes the item stop being true — a later run or the clock may satisfy
+  it. `owner_action` is the part of that only a person can do. It is always a subset, and its **null**
+  is the load-bearing value: the one thing `what_would_resolve` cannot express, because "the page is
+  updated after the appointment" is a real resolution that asks nothing of anybody today.
+- **If you cite an open item, supersede it or say why both stand.** Citing an open item and leaving it
+  open is a duplicate, not a citation. A live pair sat eleven days with the stale, narrower item at a
+  *higher* priority than the one that subsumed it — so a replacement must inherit at least the
+  priority it retires, and nothing sinks by being replaced.
+- **A default cannot fail, so a default is never a decision** (`coding` / silent-failure-design). The
+  quieter twin of a control that never ran: one that ran on a value nobody chose. A notification lane
+  defaulted to `household`, one call site omitted it, and an operator alert sat in a family queue for
+  eleven days with no error, no log and no diff. Ask it of the parameter — *if the caller had never
+  thought about this, what would I see?* — and make omission loud with a structural test over the call
+  sites rather than a runtime exception.
+
+**Consumers must re-reconcile their twins.** Unlike every release since v3.0.0, the archetypes are
+*not* byte-identical: `file-ingest/{ingest,reconcile}.md`, `user-synthesis/{synthesise,reconcile}.md`,
+`wiki-maintenance/SKILL.md` and `ARCHITECTURE.md` all change. A deployment advancing its pin will see
+its prompt-derivation check go red until the twins are re-derived and restamped — correctly, this
+time: it is real content drift, not the provenance-lag false signal of v3.0.0–v4.3.2.
+
 ## v4.3.2 — 2026-08-01
 
 A **PATCH** (reference implementation family-ai-os v1.49.4): v4.3.1 named the two drifts but
