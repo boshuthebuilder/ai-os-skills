@@ -76,8 +76,22 @@ destination. For example, blank spaces become `%20`" — and Typora resolves the
 
 ```python
 from urllib.parse import quote
-quote(relative_path, safe="/")     # spaces → %20, & → %26, ( ) → %28 %29, CJK → percent-encoded
+quote(relative_path, safe="/&")    # spaces → %20, ( ) → %28 %29, CJK → encoded; & stays LITERAL
 ```
+
+**The ampersand is the exception, and it is the one that bites.** Neither Typora nor Obsidian decodes
+`%26` when opening a local file — though both decode `%20` and CJK **in the same destination**, which
+is what makes it so quiet. The link looks correctly encoded, and is, and opens nothing:
+
+| destination | Typora 1.14.9 | Obsidian 1.12.7 |
+|---|---|---|
+| `…%20%26%20…` | "Cannot open location …", offers it as an `https://` URL | does not open — **creates** a stray note and a `Health %26 Medical` folder |
+| `…%20&%20…` | opens the file | opens the file |
+
+True for a markdown link and an HTML `<a href>` alike, so no form rescues `%26`. Obsidian's failure is
+the worse one: the click *writes* into the vault rather than reporting anything. Filenames carrying `&`
+are ordinary — "Brand Concept & Development Plan", "Health & Medical", "Teaware & Mino Ware" — so this
+is not an edge case, it is a whole class of link silently dead.
 
 **Encoding the brackets is load-bearing, not cosmetic.** Most tooling parses a link destination as
 `[^)]+` — including link linters you may already run — so a raw `)` inside a filename silently truncates
@@ -125,8 +139,19 @@ exact regression.
 
 The moment a name sits inside `<a>…</a>` it is HTML, not markdown text. `html.escape()` it. Filenames
 carry `&` constantly ("Goldfish & Cruise Ship", "Teaware & Mino Ware") and an unescaped one is at best
-wrong and at worst breaks the element. The `href` is separately percent-encoded, where `&` is already
-`%26` — the two escapings are different and both are needed.
+wrong and at worst breaks the element.
+
+**An attribute value is HTML too.** Since the destination now keeps its `&` literal, the `href` must be
+HTML-escaped as well, so that `&` becomes `&amp;` — an attribute is where a bare `&` opens a character
+reference. That is *three* escapings in one element, each for a different position:
+
+```python
+f'<a id="{anchor_id}" href="{escape(href(target), quote=True)}">{escape(text)}</a>'
+#         ^ ascii id           ^ percent-encoded, then entity-escaped   ^ entity-escaped
+```
+
+`&amp;` in the attribute is the form verified to open the file. None of the three substitutes for
+another, and dropping the middle one is invisible until someone clicks a filename with an `&` in it.
 
 ## Tables
 
@@ -176,7 +201,8 @@ Two failure modes this catches that reading cannot:
 Before shipping a generator that writes markdown for a person:
 
 - [ ] Every name that names a document links to **the document**, not to a section about it
-- [ ] Destinations percent-encoded with `safe="/"`; brackets encoded; extension present
+- [ ] Destinations percent-encoded with `safe="/&"`; **`&` left literal**; brackets encoded; extension present
+- [ ] Inside an HTML attribute the href is entity-escaped too, so the `&` reads `&amp;`
 - [ ] No empty `<a></a>` anywhere — asserted in a test
 - [ ] Ids minted from a stable identity, not from the title
 - [ ] Text inside an inline element HTML-escaped; hrefs percent-encoded

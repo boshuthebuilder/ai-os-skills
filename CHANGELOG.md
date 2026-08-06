@@ -4,6 +4,27 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v5.2.0 — 2026-08-06
+
+A **MINOR** correcting a rule `portable-markdown` shipped wrong yesterday: it told you to
+percent-encode the ampersand.
+
+Neither Typora 1.14.9 nor Obsidian 1.12.7 decodes `%26` when opening a local file — though both decode
+`%20` and CJK **in the same destination**, which is what makes it invisible. The link looks correctly
+encoded by Obsidian's own documented rule, and is, and opens nothing. In Obsidian the click is worse
+than a failure: it **creates** a stray note and a `Health %26 Medical` folder in the vault rather than
+reporting anything.
+
+True for a markdown link and an HTML `<a href>` alike, so no form rescues it. Filenames carrying `&`
+are ordinary — "Brand Concept & Development Plan", "Health & Medical" — so this is a whole class of
+link silently dead, not an edge case. In the deployment this came from, 86 wiki links were affected.
+
+- `quote(path, safe="/&")` — the `&` stays literal.
+- Inside an HTML attribute the href must then be entity-escaped too, so the `&` reads `&amp;` — the
+  form verified to open. Three escapings in one element, none substituting for another.
+- `REFERENCE.md` gains the clicked matrix, and the note that no existence check can catch this:
+  `unquote("%26")` gives the real path, so the link is valid on disk and dead in the hand.
+
 ## v5.1.0 — 2026-08-06
 
 A **MINOR**: a new `productivity` skill, `portable-markdown`, and no change to any existing rule.
