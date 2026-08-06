@@ -24,6 +24,22 @@ Verified 2026-08-06 against **Typora 1.14.9** on macOS 15. Obsidian rows marked 
 **The decisive pair:** an empty `<a>` shows its own source; an `<a>` *with content* shows only the
 content. That is what makes id-plus-href-on-one-element the form to use.
 
+## Links and the vault boundary — Obsidian 1.x, clicked
+
+| construct (page inside `Vault/`, target outside it) | ⌘-click behaviour |
+|---|---|
+| `[x](../../Docs/A%20Report.pdf)` — file, outside the vault | **dead** — Obsidian treats it as an in-vault path |
+| `[x](../../Docs/Folder/)` — folder, outside the vault | **throws** `Cannot read properties of null (reading 'getParentPrefix')` |
+| `[x](../Sub/Note.md)` — inside the vault | opens |
+| `[x](../Sub/Note)` — inside the vault, no extension | opens (Typora does **not**) |
+| `file:///Users/someone/…` | dead on any machine but the author's |
+
+Clicking a dead out-of-vault link is not inert: one form made Obsidian attempt to **create** the
+target. Nothing was written in the observed case, but treat the click as a write attempt, not a no-op.
+
+The same links all open in Typora, which resolves on the filesystem. This asymmetry is the single
+biggest portability trap for a generated document, and it is invisible to any syntax check.
+
 ## Documented rules
 
 | rule | source |

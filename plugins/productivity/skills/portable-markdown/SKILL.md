@@ -43,6 +43,32 @@ Split it by purpose:
 The file link is also the only form both Obsidian's and Typora's own help documents. Prefer it; treat the
 in-document anchor as the extra you verified.
 
+## The vault boundary — the one thing no amount of syntax fixes
+
+**Obsidian resolves every path from the vault root and cannot follow a link that escapes it.** Its
+help states it plainly — "Folder paths start at the vault root" — and driving it confirms there is no
+graceful degradation: a relative link out of the vault throws
+`Cannot read properties of null (reading 'getParentPrefix')`, and one that looks like a note path
+makes Obsidian try to **create** it instead.
+
+This matters because the natural layout puts the generated document *inside* a folder and the files it
+describes *beside* that folder:
+
+```
+Project/
+├── Wiki/          ← the vault, and where your generated pages live
+└── Documents/     ← what those pages cite:  ../../Documents/x.pdf
+```
+
+Every such link works in Typora, which resolves on the filesystem, and is dead in Obsidian. No
+encoding, extension or escaping changes that. **It is a property of where the vault is rooted, not of
+the page** — so treat it as a configuration finding, not a defect to repair. If your generator lints
+links, report this class *separately* from the repairable ones: fold it in and you invite a mass
+rewrite of working links to satisfy a setting nobody has chosen. In the case this skill came from that
+would have been 120 of them.
+
+The fix, when someone wants one, is to root the vault at the parent (`Project/`) so both are inside it.
+
 ## Link destinations
 
 **URL-encode the destination.** Obsidian's help is explicit — "make sure to URL encode the link
