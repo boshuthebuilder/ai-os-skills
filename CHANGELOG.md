@@ -4,6 +4,36 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v5.1.0 — 2026-08-06
+
+A **MINOR**: a new `productivity` skill, `portable-markdown`, and no change to any existing rule.
+
+Generated markdown has two audiences — a renderer and a person — and "the renderer" is not one
+renderer. The same file is opened in Typora, in Obsidian, and in whatever previews it elsewhere, and
+they diverge in exactly the places a generated document leans on: links, anchors, tables, inline HTML.
+
+The skill came out of a real defect in the reference implementation (family-ai-os v1.51.0–v1.52.1).
+A folder audit was rebuilt to open with a map of what happened to each dropped file. It rendered
+correctly and every link resolved, and the operator still reported that the file links did not work.
+Two distinct causes, neither of them the markdown and neither of them the editor's settings:
+
+- an **empty `<a id="x"></a>`** renders as literal visible text in Typora, so all 177 headings read
+  `<a id="doc-4b1671ff4451"></a>ALWAYSFLOW - Price List …`. An `<a>` *with content* renders only its
+  content, which is why the id and the href belong on one element rather than two.
+- of 834 links, **657 were in-document anchors** and only 177 opened a file. Every name the reader
+  clicked in the summary tables did exactly what it was told, and what it was told was wrong: a table
+  whose purpose is to hand over a document should link to the document.
+
+Hence the skill's central rule — a link's destination follows from what the link is *for* — plus the
+encoding both vendors' help does state (URL-encode the destination; keep the file extension; escape
+pipes in table cells), the two separate escapings needed when text sits inside an inline element, and
+the observation that **no in-document link form is documented by both** editors, so the file link is
+the portable choice and the anchor is a verified extra.
+
+`REFERENCE.md` carries the matrix, driven in Typora 1.14.9 rather than reasoned about, because most of
+this behaviour is undocumented — including a probe template for settling the next such question, and a
+short list of things that look like defects and are not.
+
 ## v5.0.0 — 2026-08-03
 
 A **MAJOR** (reference implementation family-ai-os v1.50.7): a semantic change to a documented rule.

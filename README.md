@@ -9,8 +9,9 @@ own:
 - **`ai-os`** — the framework and skills for a **headless AI assisting system**: one that runs
   unattended over a person's real folders, notices what changed, reasons over it, and keeps a
   synthesised layer current without being asked.
-- **`productivity`** — skills for individual AI-assisted work. The first is `ai-writing-audit`:
-  check a draft for the signs of AI authorship and rewrite so it reads as human.
+- **`productivity`** — skills for individual AI-assisted work: `ai-writing-audit`, which checks a
+  draft for the signs of AI authorship and rewrites so it reads as human, and
+  `portable-markdown`, for generating .md a person will open in a desktop editor.
 
 The conventions live in **one home**, so interactive Claude Code / Cowork sessions and automated
 pipelines share the same logic.
@@ -157,6 +158,15 @@ behalf, rather than the code or the folder.
   score. Carries the pattern catalogue (`REFERENCE.md`, sourced and era-tagged, verified against the
   2026 landscape) and a triage scanner (`tools/audit.py`) that grades hits into evidence bands. Use
   it on any prose you are about to share so it reads as a person wrote it.
+
+- **`portable-markdown`** — write markdown a person will actually open in Typora, Obsidian or a
+  plain viewer, so the links land on the right thing and no raw markup shows. The rule that
+  prevents most of the damage is that a link's destination follows from what the link is *for* —
+  a name that names a document should open that document, not jump to a section about it. Carries
+  the encoding rules both editors' help states, the anchor form that renders invisibly (an empty
+  `<a></a>` shows its own source in Typora), table cells that survive model-written text, and a
+  probe template for settling behaviour neither vendor documents. `REFERENCE.md` holds the
+  clicked-in-the-application matrix.
 
 ## How updates propagate
 
