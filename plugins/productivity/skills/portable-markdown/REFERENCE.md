@@ -61,15 +61,31 @@ both** — which is why the portable choice is the file link, with the anchor as
 
 ## Encoding
 
-`urllib.parse.quote(path, safe="/")` produces what both accept:
+`urllib.parse.quote(path, safe="/&")` produces what both accept:
 
 | character | becomes | why it matters |
 |---|---|---|
 | space | `%20` | required by Obsidian's help |
-| `&` | `%26` | common in real filenames |
+| `&` | **stays `&`** | **`%26` opens in NEITHER editor** — see the row below |
 | `(` `)` | `%28` `%29` | a raw `)` truncates the destination for any `[^)]+` parser |
 | `#` | `%23` | otherwise read as a fragment |
 | CJK | percent-encoded UTF-8 | round-trips through `unquote` for verification |
+
+### The ampersand, clicked (2026-08-06, against a real 1.4 MB PDF)
+
+| destination | Typora 1.14.9 | Obsidian 1.12.7 |
+|---|---|---|
+| `…%20%26%20…`, markdown link | "Cannot open location …", offers `https://…` | does not open — **creates** a stray note + folder |
+| `…%20%26%20…`, HTML `<a href>` | same failure | (same class) |
+| `…%20&%20…`, markdown link | **opens** | **opens** |
+| `…%20&amp;%20…`, HTML `<a href>` | **opens** | — |
+
+Both editors decode `%20` and CJK **in the same destination** that they fail to decode `%26` in. That
+asymmetry is why this is invisible to review: the destination is correctly encoded by the documented
+rule, and dead. Obsidian's variant is a **write**, not a read failure.
+
+A generated document cannot detect this by checking whether the target exists: `unquote("%26")` gives
+the real path, so the link is valid on disk and dead in the hand. It has to be named as its own defect.
 
 Escaping is **two separate jobs** when text sits inside an inline element: `html.escape()` the visible
 text, percent-encode the `href`. Neither substitutes for the other.
