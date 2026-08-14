@@ -50,12 +50,14 @@ small set of **fixed meta pages**:
 ├── 01 Deadlines    derived list of forward dates (+ a calendar feed if there is one)
 ├── NN <Domain>     one numbered folder per domain, each with an overview note + detail pages
 │   …
-├── 09 Schema       the wiki's constitution — per-page purpose, fields, and update triggers
-└── 10 Log          append-only history of what was ingested/changed
+├── 90 Schema       the wiki's constitution — per-page purpose, fields, and update triggers
+└── 91 Log          append-only history of what was ingested/changed
 ```
 
 Number prefixes drive sidebar ordering (in Obsidian, putting each page in a folder of the same name
-sorts the root numerically). This layout is the **recommended default, not a law** — adapt the domains
+sorts the root numerically). The meta pages sit at high numbers (9x) so content owns the 00–89 range:
+a wiki that works will grow domains, and Schema and Log should never need renaming to stay last.
+This layout is the **recommended default, not a law** — adapt the domains
 and names to the material, and record whatever you choose in the Schema (step 4). A small, honest
 structure beats an elaborate one the material doesn't justify; only create a domain the owner actually
 has files for.
@@ -81,7 +83,10 @@ Create the meta pages and the agreed domain pages:
 - **Schema** — the constitution. For each page: its **purpose**, the **fields to maintain**, and the
   **source documents that trigger an update**. This is the durable artefact every maintenance pass
   follows; if you choose non-default names or layout, the Schema is where that is recorded and made
-  authoritative.
+  authoritative. When retrofitting a Schema onto a wiki that already exists, enumerate what is actually
+  there first — top-level files and folders, page counts, frontmatter conformance — and write the
+  constitution to describe the country as found, not as remembered: a Schema that omits the bulk of the
+  wiki is worse than none, because nothing ever notices.
 - **Index** — the dashboard: a table of contents by section, a short "most urgent / needs attention"
   list, and an "open questions" list for known gaps.
 - **Log** — append-only, one dated line per pass.

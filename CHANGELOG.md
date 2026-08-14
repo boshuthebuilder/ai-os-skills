@@ -4,6 +4,60 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v6.0.0 — 2026-08-14
+
+A **MAJOR** for `wiki-maintenance` (plus the layout guidance it shares with `wiki-onboarding`),
+driven by two independent field reports from live deployments (2026-08-13 and 2026-08-14 — fifteen
+distinct findings between them, every one observed in production). Both reports led with the same
+finding: legacy frontmatter had made most of a wiki invisible to the sweeps, and nothing ever said
+so — the exact silent-failure class the `coding` plugin's `silent-failure-design` skill names,
+which the wiki machinery did not apply to itself.
+
+Two documented rules change meaning — the MAJOR:
+
+- **`provenance: manual` gains its one exit.** When a subsequently ingested source *confirms* a
+  manual assertion exactly, ingest may upgrade the fact to `derived`, citing the new source
+  (keeping a "first asserted by owner on DATE" trace where useful). Previously manual was never
+  rewritten, full stop — which left confirmed facts permanently exempt from reconciliation despite
+  a source of truth on file. Contradiction is unchanged: manual wins, discrepancy recorded, owner
+  asked.
+- **Last-4-only gains an owner override valve.** An explicit, dated owner decision recorded in the
+  Schema (or the wiki's data-sensitivity page) is respected by the sweeps — a decided exception
+  stops alerting. Previously the rule guaranteed a permanently re-raised flag the owner had
+  already declined.
+
+The additive bulk, by theme (`wiki-maintenance` unless noted):
+
+- **Liveness over silence.** Adoption of the frontmatter contract is explicit: conformance is
+  counted first in every reconcile and reported even when clean ("94/94 conforming" is a liveness
+  signal); a page the sweeps cannot read is a finding, never a skip; a legacy wiki converges via a
+  bounded migration batch per run. Referenced paths are resolved (frontmatter `source:`, body-level
+  backticked paths, "file X exists at Y" claims) with the dead count reported, and `source:` paths
+  are now mandated **project-root-relative**. The Schema is diffed against the directory it claims
+  to describe. The Index must be the freshest page and reconcile against the queue's open items.
+  An empty Deadlines roll-up renders a loud banner when derived pages exist, never a bare "None".
+- **Filing.** On filename collision, hash-compare before renaming — identical bytes are a
+  duplicate routed to deletion/review, never filed twice (the machinery `file-preprocessing`
+  already keys on). The no-new-folders guard gains its escape hatch: check what the local
+  convention predicts, and a genuinely-needed folder escalates *with the proposed path* as a
+  one-click owner decision.
+- **Provenance lifecycle.** A shrink guard on derived pages: an edit removing more than roughly
+  half a page, or emptying Schema-declared sections, diverts to `.proposed.md` regardless of who
+  last wrote the page. Extract-provenance pages are regenerated from the extract, never hand-edited.
+  The transient-artefact rule extends beyond `.proposed.md` to `.superseded`/backup siblings.
+- **Noise.** One raise per distinct blocker — a repeat increments a counter on the existing entry,
+  never appends. Reconcile folds runs of no-op log entries into digest lines.
+- **Layout.** The example trees here and in `wiki-onboarding` move the meta pages to `90 Schema` /
+  `91 Log` so content owns 00–89 and the meta pages never need renaming as domains grow. (The
+  Second Brain vault layout in `user-onboarding`/`user-synthesis` keeps `09/10`: its top-level
+  areas are a closed set, so the headroom argument doesn't apply.) A new rename protocol covers
+  the project-wide sweep, the never-rewritten append-only log, and watch items for out-of-folder
+  consumers. `wiki-onboarding`'s Schema step now requires enumerating what actually exists before
+  writing the constitution when retrofitting.
+
+Enforcement-layer counterparts (the deterministic roll-up zero-guard, resolving Log/Schema by
+role) are tracked in the reference deployment, per the three-layer model.
+
 ## v5.2.0 — 2026-08-06
 
 A **MINOR** correcting a rule `portable-markdown` shipped wrong yesterday: it told you to

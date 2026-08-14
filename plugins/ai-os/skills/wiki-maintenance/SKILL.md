@@ -49,14 +49,16 @@ about their affairs rather than as an abstract index. A typical shape:
 ├── 03 Property     overview note + one page per property
 ├── 04 Finance      Recurring Bills, Investments, …
 │   …
-├── 09 Schema       the wiki's constitution — per-page purpose, fields, and update triggers
-└── 10 Log          append-only history
+├── 90 Schema       the wiki's constitution — per-page purpose, fields, and update triggers
+└── 91 Log          append-only history
 ```
 
 Conventions that make it readable: number prefixes drive sidebar ordering (in Obsidian, put each page
 in a folder of the same name so the root sorts numerically); each domain folder has an **overview note**
 of the same name plus **one detail page per item**; a domain exists only because the owner has files for
-it — never invent a taxonomy the material doesn't have.
+it — never invent a taxonomy the material doesn't have. The meta pages sit at high numbers (9x) so
+content owns the 00–89 range: a wiki that works will grow domains, and Schema and Log should never need
+renaming to stay last.
 
 **This is a recommended default, not a law.** The authority for *this* wiki's exact names and layout is
 its **Schema page** — maintain the wiki in the structure the Schema declares, and write into the sections
@@ -100,12 +102,24 @@ This is the spine. For **each** item in the inbox / drop folder:
    filename** (rename a meaningless `Scanned Document.pdf` to something like
    `Finance/Bills/<provider> Statement 2026-05-27.pdf`), keeping the extension. **Never create a new
    top-level folder.** Anything you can't place confidently stays put and is flagged for review.
+   **On a filename collision, compare content before renaming:** hash the inbox item against the file
+   already at the destination (file-preprocessing keys its whole manifest on content hashes for exactly
+   this reason). Identical bytes are a duplicate, not a filing problem — don't file it; log it as a
+   duplicate and route it to deletion/review. Only different content behind the same natural name earns
+   the non-colliding rename.
+   **When the destination folder seems missing**, check its siblings for the folder the local convention
+   actually predicts (country vs city names, year prefixes) before raising anything — the right folder
+   usually exists under a different convention than the source suggests. If a folder genuinely must be
+   created, escalate *with the proposed path* as a one-click decision for the owner, never a bare report
+   of absence.
 3. **Update the pages the source touches.** Use the Schema's trigger table to pick the page(s); update
    their fields; add a provenance link down to the source file. **If the source carries a forward-looking
    date** (renewal, payment, expiry, deadline), record it as `deadline: YYYY-MM-DD` (or a `deadlines:`
    list) in **that page's** frontmatter. If your setup has a deterministic step that rolls those dates
    into a Deadlines page, don't hand-write that page — let the roll-up build it; otherwise update the
-   Deadlines list yourself from the page dates. One item typically touches a handful of pages.
+   Deadlines list yourself from the page dates. One item typically touches a handful of pages — and the
+   Index counts among them whenever the item changes anything the Index carries (the urgent list, a key
+   fact, an open question).
 4. **Surface what needs a human** — precise and quiet (see *Surfacing*, below).
 5. **Log it.** Append one dated line: `## [YYYY-MM-DD] <action> | <short summary>`.
 
@@ -119,7 +133,11 @@ There is nothing to file in step 2 — the note's home *is* the wiki page.
 
 **Fail loud, never silent.** A blocked, locked, unavailable or unreadable source is a *named* state
 (flagged for review with its reason) — never dropped, never defaulted to "nothing to do". A genuinely
-empty inbox and a blocked read must look different.
+empty inbox and a blocked read must look different. **And loud once, not loud repeatedly:** raise each
+distinct blocker exactly once. When a later run meets the same blocker, increment a counter on the
+existing entry ("×8"), never append a new log entry, action or escalation — one line per *state change*.
+A frequent tick that re-raises the same block converts one problem into a queue-management workload of
+its own.
 
 ## Query
 
@@ -131,7 +149,29 @@ page rather than letting it vanish into chat.
 
 Reconcile the wiki **to the files** (the golden source): look for contradictions between pages, stale
 claims a newer source supersedes, orphan pages, missing domains and data gaps; refresh the Index
-(most-urgent, open-questions, key-facts); record the pass in the log. Reconcile **never flags or rewrites
+(most-urgent, open-questions, key-facts); record the pass in the log.
+
+Every reconcile starts with the cheap, deterministic checks, and each one reports its count **even when
+the count is clean** — "no findings" from a sweep that saw nothing and "no findings" from a healthy wiki
+must never look alike:
+
+- **Conformance first.** Count pages missing the required frontmatter keys (`provenance`,
+  `last-updated`, `status`) and report N-of-M conforming — "94/94" is a liveness signal; silence is not.
+  A page the sweeps cannot read is a finding, never a skip. On a legacy wiki, migrate a bounded batch to
+  the canonical keys each run, so the wiki converges instead of staying invisible forever.
+- **Paths resolve.** Check that referenced paths exist — frontmatter `source:` keys, body-level
+  backticked paths, and claims of the form "file X exists at Y" — and report the dead count.
+- **The Schema matches reality.** Diff the Schema's declared layout (the top-level files and folders it
+  names) against a directory listing; an undeclared folder or a described-but-missing page is a finding.
+- **The Index is the freshest page.** If any page's `last-updated` is newer than the Index's, refresh
+  the Index (most-urgent, open questions, key facts) within this pass — the read-first page is the last
+  thing allowed to rot. Reconcile the dashboard against the log/queue's open items too: every open
+  action either appears under needs-attention/open-questions or is deliberately excluded. (On a wiki
+  that predates the Index spec, this duty is also what bootstraps the dashboard into existence.)
+- **Fold the log's no-op runs.** Collapse a run of consecutive "nothing changed" entries older than a
+  few days into one digest line — the log stays legible, the history stays complete.
+
+Reconcile **never flags or rewrites
 `provenance: manual` content** — that is owner-asserted and authoritative. Authored notes (ideas,
 brainstorms) may be *merged or cross-linked* during a reconcile where they clearly belong together, but
 their content and `provenance: manual` marking are preserved — consolidation never deletes or contradicts
@@ -162,24 +202,61 @@ with no inline maintainer, the scheduled passes are the primary path.
 - **Never overwrite a human edit.** A maintained wiki keeps a record (e.g. a file-hash log) of every page
   the system wrote. If a human has since edited such a page, propose the change as a `.proposed.md` sibling
   rather than overwriting it.
+- **Never shrink a derived page silently.** The human-edit guard doesn't catch system-on-system clobbers,
+  so size is its own tripwire: an edit that would remove more than roughly half a page's content, or
+  empty sections the Schema declares for that page, diverts to a `.proposed.md` sibling **regardless of
+  who last wrote the page**. The Schema already knows what the page should hold — use it as the yardstick.
+- **Transient artefacts don't linger.** A `.proposed.md` awaiting review is the only sanctioned sibling,
+  and only until the owner accepts or rejects it. Any other parked copy — a `.superseded` page, a `.bak`,
+  a backup a rewrite left behind — is finished business: merged or discarded means deleted (or queued for
+  owner deletion), never left beside the live page.
 - **Provenance always.** Mark each page (or block) by where it came from:
   - **derived** — synthesised from a saved file; the lint reconciles it against the files, and every claim
-    links down to its source.
+    links down to its source. A page whose Schema entry says its figures are *computed from an extract*
+    is regenerated **from** that extract, never edited around it — a pass that cannot run the
+    regeneration must not touch the figures (a hand-restated table looks extract-derived while drifting
+    row by row).
   - **manual** — a fact the owner asked to record that is **not** from a saved file. It is authoritative:
-    the lint never flags or rewrites it.
+    the lint never flags or rewrites it. One upgrade path exists: when a subsequently ingested source
+    **confirms** the assertion exactly, ingest may rewrite the fact as `derived`, citing the new source
+    (keeping a "first asserted by owner on YYYY-MM-DD" trace where useful) — a confirmed fact rejoins
+    reconciliation rather than staying exempt forever. Contradiction is different and unchanged: manual
+    wins, the discrepancy is recorded, the owner is asked.
   - **external feed** (e.g. a calendar's "Coming Events") — a read-only view of an external source, kept
     **distinct from file-derived deadlines** and never `.proposed.md`-guarded as if human-authored. In
     the automated job framework it is **rendered deterministically** from the snapshot (a pure function
     of feed + clock, exactly like the Deadlines roll-up) — a scheduled job never rebuilds it; only a
     hand-kept wiki refreshes it manually. Either way an empty, stale or blocked read must **never blank
     it** — leave the prior version and note the gap.
-- **Sensitive identifiers, last-4 only.** Record passport / account / licence / card numbers as the last 4
-  digits only, never in full — on every page, in every table.
+- **Sensitive identifiers, last-4 only — unless the owner decides otherwise.** Record passport / account /
+  licence / card numbers as the last 4 digits only, never in full — on every page, in every table. The
+  owner may override this: an explicit, dated decision recorded in the Schema (or the wiki's
+  data-sensitivity page) is respected by every sweep from then on. A decided exception stops alerting;
+  it never becomes a permanently re-raised flag.
 - **Deadlines are derived, not authored.** Record the date on the page that owns it; build the Deadlines
-  list from those, and keep it distinct from any calendar feed.
+  list from those, and keep it distinct from any calendar feed. **An empty roll-up must say why:** zero
+  rows found while derived pages exist is a likely keying fault, rendered as a loud banner on the
+  Deadlines page ("roll-up found no frontmatter deadlines across N pages") — never a bare "None". A
+  deployment's deterministic roll-up enforces this in code (prose can't hold it); a hand-kept wiki
+  applies it by hand.
 - **A wiki is self-contained.** Keep a wiki about *its own folder* — don't name or link another project
   from it. If your setup maintains a separate cross-folder or user-level wiki, that is the only place
   cross-references live, and it only ever reads project wikis — it never writes back into them.
+
+## Renaming a page or folder — the rename protocol
+
+The Schema is the single home for layout, so a layout *change* is a Schema change plus a sweep:
+
+- **Sweep the whole project folder** for the old path — wiki pages, memory files, the folder's
+  rulebook/config, anything the deployment keeps beside the wiki. Wiki-internal links, frontmatter
+  `source:` keys and config values all move in the same pass.
+- **Never rewrite the append-only log.** Historical paths in old entries are records of what was true,
+  not dead links to fix.
+- **Out-of-folder consumers get a watch item.** Anything that reads the old path but can't be swept from
+  here (an engine's prompt templates, an external config) is logged as a watch item and verified against
+  that consumer's next run — a rename isn't done until its last consumer has survived it.
+- Deployments do well to resolve the Log and Schema **by role** (from the Schema itself, or by layout
+  detection) rather than by hardcoded path, so a rename is a one-line change instead of a hunt.
 
 ## Canonical frontmatter — the keys the deterministic sweeps read
 
@@ -194,7 +271,7 @@ are a contract, not a style choice. The first three are **required on every deri
 | `provenance` | always | `derived` \| `manual` \| `calendar` | every sweep (skips `manual`/`calendar`) |
 | `last-updated` | always | `YYYY-MM-DD` | the freshness sweep |
 | `status` | always | `current` \| `superseded` | every sweep (skips `superseded`) |
-| `source` *(single)* / `sources` *(list)* | when file-derived | path(s) to the source file(s), or — for a cross-project synthesis — the source **pages** | the orphan sweep |
+| `source` *(single)* / `sources` *(list)* | when file-derived | **project-root-relative** path(s) to the source file(s) — never absolute, so a folder rename or machine move is a no-op — or, for a cross-project synthesis, the source **pages** | the orphan sweep |
 | `deadline` *(single)* / `deadlines` *(list)* | when a forward date exists | `YYYY-MM-DD` (or `{date, note}`) | the Deadlines roll-up |
 
 (A cross-project user-tier page is `provenance: derived` with `last-updated`/`status` but need carry no
@@ -206,6 +283,13 @@ reader must still accept is **`updated:` for `last-updated:`** — older wikis c
 sweep reads either, but **every new or rewritten page uses `last-updated:`**. Don't invent further
 spellings (`date:`, `modified:`, `src:`): they are silently invisible to the sweeps. When you touch a
 page carrying a legacy alias, migrate it to the canonical key.
+
+**Adoption is explicit, never assumed.** Dropped onto a wiki that predates this contract, the sweeps'
+starting state is blindness — every legacy-keyed page is invisible, and "no findings" is
+indistinguishable from health. So on first contact, inventory conformance: count the pages that don't
+parse under the canonical keys and surface the number on the Index as an error state. Until every
+derived page conforms, legacy-keyed pages are findings, never skips — the reconcile duties above make
+this the first check of every pass.
 
 ## Surfacing what needs a human — precise and quiet
 
