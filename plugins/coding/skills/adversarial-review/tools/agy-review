@@ -32,10 +32,15 @@
 #                         ~/.gemini/antigravity-cli/settings.json) are NOT consulted.
 #                         See the skill's Machine setup section for the exact block.
 #                         When the denial lands AFTER the review is composed — the reviewer
-#                         reaching for a command at its final step (fired twice 2026-08-14) —
-#                         the harness salvages before conceding: it resumes the run's
-#                         conversation, has it print the composed review, and relays it to
-#                         the PR itself. See the relay salvage at the bottom.
+#                         reaching for a command at its final step (fired at least 9 times
+#                         across family-ai-os PRs by 2026-08-14) — the harness salvages
+#                         before conceding: it resumes the run's conversation, has it print
+#                         the composed review, and relays it to the PR itself. The same
+#                         posting-step death doesn't always match the auto-denied grep below
+#                         — one PR landed on a bare no-comment instead — so the salvage
+#                         attempt runs on THAT path too, gated only on a captured conversation
+#                         id, never on which grep classified the failure. See the relay
+#                         salvage at the bottom.
 #   2. print-timeout      -p mode's default wait is 5m; a real review runs longer and is
 #                         killed mid-flight with no message. We pass --print-timeout.
 #   3. stale-scratch      agy reviews in its own clone (~/.gemini/antigravity-cli/scratch/
@@ -72,7 +77,8 @@
 #   exit 3  permission-denied  grants missing at pre-flight, or rejected mid-run AND the
 #                              relay salvage also failed (fix config.json, above)
 #   exit 4  timeout            killed by the watchdog with no comment posted
-#   exit 5  no-comment         agy exited without printing a marked review (narration tail printed)
+#   exit 5  no-comment         agy exited without printing a marked review AND the relay
+#                              salvage found nothing to recover (narration tail printed)
 #   exit 6  bad-args / missing prerequisites
 set -u
 
@@ -365,69 +371,80 @@ note_window_burn() {
   echo "agy-review:     next ROUND (never re-run this leg). Confirm against $OUT.log or a conversation autopsy." >&2
 }
 
+# ---- relay salvage (class 1, posting-step shape) --------------------------------------
+# A run can die AFTER the review is fully composed: the reviewer reaches for a command at
+# its final step (posting, or one last check) and the process ends without ever printing
+# the marked review — the verdict then exists only inside the kept conversation. This shape
+# has been observed landing on BOTH typed exits: the common case matches the auto-denied
+# grep below (permission-denied, exit 3), but the same posting-step death has also been
+# seen falling through to the generic no-comment path (exit 5) when the log's final line
+# doesn't match that grep. So this attempt is gated only on whether a conversation id was
+# captured at all — never on which grep classified the failure — and both branches call it
+# before conceding their typed exit. It is safe to call on a run that composed nothing (an
+# invented-command death mid-read, or a genuine window-burn): the resumed run is told to run
+# no tools, so it can only print what it already has, and the verdict-line gate below
+# refuses to relay a resume with no APPROVE/CHANGES-REQUESTED — turning a doomed salvage
+# into a few wasted seconds, never a false relay. Returns 0 (and has already posted +
+# cleaned up) on a successful relay, 1 otherwise — the caller's own typed exit stands.
+attempt_relay_salvage() {
+  [ -n "$CONV" ] || return 1
+  echo "agy-review: attempting relay salvage from conversation $CONV" >&2
+  SALVAGE="$(mktemp "/tmp/agy-review-salvage-${PR}.XXXXXX")"
+  ( cd "$REVIEW_ROOT" && exec agy --conversation "$CONV" --print-timeout "$SALVAGE_PRINT_TIMEOUT" \
+      -p "You were unable to post your review and it was never captured. Do NOT run any command or tool — every one will be denied. Print the composed review verbatim and complete, as plain text. Then stop." \
+    ) >"$SALVAGE" 2>&1 &
+  SALVAGE_PID=$!
+  ( sleep "$SALVAGE_WATCHDOG_SECS" & wait $!
+    kill_tree "$SALVAGE_PID" ) &
+  SALVAGE_WD=$!
+  disown "$SALVAGE_WD" 2>/dev/null
+  wait "$SALVAGE_PID"
+  kill_tree "$SALVAGE_WD"
+  # Prefer the marker-delimited body if the resume reprinted it, DROPPING the marker line —
+  # the relay preamble re-adds our own, and count_marker_comments needs the marker FIRST;
+  # otherwise take the resume's whole output. Either way a Verdict line gates the post:
+  # without APPROVE / CHANGES-REQUESTED there is no review to relay, only narration.
+  RECOVERED="$(mktemp "/tmp/agy-review-recovered-${PR}.XXXXXX")"
+  awk -v m="$MARKER" '
+    index($0,m){ last=NR }
+    { line[NR]=$0 }
+    END{ if(!last) exit 1
+         for(i=last+1;i<=NR;i++) print line[i] }
+  ' "$SALVAGE" >"$RECOVERED" 2>/dev/null
+  [ -s "$RECOVERED" ] || cp "$SALVAGE" "$RECOVERED" 2>/dev/null
+  if ! grep -Eq 'APPROVE|CHANGES-REQUESTED' "$RECOVERED"; then
+    echo "agy-review: relay salvage found no verdict in the resume (output kept at $SALVAGE)" >&2
+    return 1
+  fi
+  RELAY_BODY="$(mktemp "/tmp/agy-review-relay-${PR}.XXXXXX")"
+  { printf '%s:\n\n' "$MARKER"
+    printf '_Relayed by the agy-review harness: the reviewer composed this review but never posted it (a mid-run failure at its final step), so the harness recovered it from conversation %s and posted it._\n\n' "$CONV"
+    cat "$RECOVERED"
+  } >"$RELAY_BODY"
+  gh pr comment "$PR" --repo "$REPO" --body-file "$RELAY_BODY" >/dev/null 2>&1
+  AFTER="$(count_marker_comments)"
+  if [[ "$AFTER" =~ ^[0-9]+$ ]] && [ "$AFTER" -gt "$BEFORE" ]; then
+    echo "agy-review: ok — review RELAYED to $REPO#$PR (reviewer never posted directly; recovered from conversation $CONV; debug log kept at $OUT.log)"
+    rm -f "$OUT" "$REVIEW_BODY" "$SALVAGE" "$RECOVERED" "$RELAY_BODY"
+    return 0
+  fi
+  echo "agy-review: relay salvage could not post (recovered body kept at $RELAY_BODY)" >&2
+  return 1
+}
+
 if [ "$RC" -ge 128 ]; then
   echo "agy-review: timeout — killed by watchdog after ${WATCHDOG_SECS}s" >&2
   [ "${WAITS:-0}" -ge 3 ] && note_window_burn
   exit 4
 elif grep -Eq "^jetski: .*auto-denied" "$OUT"; then
-  # ---- relay salvage (class 1, posting-step shape) -------------------------------------
-  # A mid-run soft-deny can land AFTER the review is composed: the reviewer reaches for a
-  # command at its final step (posting, or one last check), is auto-denied, and dies without
-  # printing the marked review — the verdict then exists only inside the kept conversation.
-  # Fired twice on 2026-08-14; both times the documented manual salvage (resume the
-  # conversation, ask it to print the review, relay via gh pr comment) recovered a complete
-  # review — so the harness now performs exactly that procedure itself before conceding
-  # exit 3. The resumed run is told to run NO commands: printing needs no tools, and a
-  # resume that retried the denied command would die the same death.
-  if [ -n "$CONV" ]; then
-    echo "agy-review: permission-denied mid-run — attempting relay salvage from conversation $CONV" >&2
-    SALVAGE="$(mktemp "/tmp/agy-review-salvage-${PR}.XXXXXX")"
-    ( cd "$REVIEW_ROOT" && exec agy --conversation "$CONV" --print-timeout "$SALVAGE_PRINT_TIMEOUT" \
-        -p "You were permission-denied at your final step and your review was never captured. Do NOT run any command or tool — every one will be denied. Print the composed review verbatim and complete, as plain text. Then stop." \
-      ) >"$SALVAGE" 2>&1 &
-    SALVAGE_PID=$!
-    ( sleep "$SALVAGE_WATCHDOG_SECS" & wait $!
-      kill_tree "$SALVAGE_PID" ) &
-    SALVAGE_WD=$!
-    disown "$SALVAGE_WD" 2>/dev/null
-    wait "$SALVAGE_PID"
-    kill_tree "$SALVAGE_WD"
-    # Prefer the marker-delimited body if the resume reprinted it, DROPPING the marker line —
-    # the relay preamble re-adds our own, and count_marker_comments needs the marker FIRST;
-    # otherwise take the resume's whole output. Either way a Verdict line gates the post:
-    # without APPROVE / CHANGES-REQUESTED there is no review to relay, only narration.
-    RECOVERED="$(mktemp "/tmp/agy-review-recovered-${PR}.XXXXXX")"
-    awk -v m="$MARKER" '
-      index($0,m){ last=NR }
-      { line[NR]=$0 }
-      END{ if(!last) exit 1
-           for(i=last+1;i<=NR;i++) print line[i] }
-    ' "$SALVAGE" >"$RECOVERED" 2>/dev/null
-    [ -s "$RECOVERED" ] || cp "$SALVAGE" "$RECOVERED" 2>/dev/null
-    if grep -Eq 'APPROVE|CHANGES-REQUESTED' "$RECOVERED"; then
-      RELAY_BODY="$(mktemp "/tmp/agy-review-relay-${PR}.XXXXXX")"
-      { printf '%s:\n\n' "$MARKER"
-        printf '_Relayed by the agy-review harness: the reviewer composed this review but was permission-denied at its final step (headless soft-deny), so the harness recovered it from conversation %s and posted it._\n\n' "$CONV"
-        cat "$RECOVERED"
-      } >"$RELAY_BODY"
-      gh pr comment "$PR" --repo "$REPO" --body-file "$RELAY_BODY" >/dev/null 2>&1
-      AFTER="$(count_marker_comments)"
-      if [[ "$AFTER" =~ ^[0-9]+$ ]] && [ "$AFTER" -gt "$BEFORE" ]; then
-        echo "agy-review: ok — review RELAYED to $REPO#$PR (reviewer permission-denied posting; recovered from conversation $CONV; debug log kept at $OUT.log)"
-        rm -f "$OUT" "$REVIEW_BODY" "$SALVAGE" "$RECOVERED" "$RELAY_BODY"
-        exit 0
-      fi
-      echo "agy-review: relay salvage could not post (recovered body kept at $RELAY_BODY)" >&2
-    else
-      echo "agy-review: relay salvage found no verdict in the resume (output kept at $SALVAGE)" >&2
-    fi
-  fi
+  attempt_relay_salvage && exit 0
   echo "agy-review: permission-denied — headless grants rejected mid-run (check $CONFIG)${CONV:+; the relay salvage above failed too}" >&2
   exit 3
 elif grep -Eiq "^(jetski|error): .*(not logged in|not signed in|authentication required)" "$OUT"; then
   echo "agy-review: auth-needed — run 'agy' once interactively to sign in" >&2; exit 2
 else
-  echo "agy-review: no-comment — agy exited rc=$RC without posting; advance the fallback chain (Codex, then independent agent)" >&2
   [ "${WAITS:-0}" -ge 3 ] && note_window_burn
+  attempt_relay_salvage && exit 0
+  echo "agy-review: no-comment — agy exited rc=$RC without posting; advance the fallback chain (Codex, then independent agent)${CONV:+; the relay salvage above failed too}" >&2
   exit 5
 fi

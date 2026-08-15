@@ -124,7 +124,7 @@ which is why the idle Antigravity pool still leads and MiniMax follows it rather
    | 2 | auth-needed | run `agy` once interactively to sign in, retry |
    | 3 | permission-denied | grants missing a rule → restore (*Machine setup*), retry; grants intact → the harness has already run the relay salvage itself (a recovered verdict posts and exits 0, not 3), so autopsy for the invented command (below); the manual salvage (*Follow-ups*) stays the fallback |
    | 4 | timeout | treat this leg as done; advance the chain |
-   | 5 | no-comment | narration tail is printed for diagnosis; advance the chain |
+   | 5 | no-comment | the harness has already tried the same relay salvage as exit 3 here too (a recovered verdict posts and exits 0, not 5) — a posting-step death does not always match the exit-3 grep, and this is where it lands when it doesn't. Narration tail is printed either way; if it's still 5, salvage found nothing to recover, so advance the chain |
    | 6 | bad-args / missing prerequisites | fix the invocation |
 
    Exits 4 and 5 are also where a *window-burn* lands — a run that spent itself waiting on a
@@ -149,6 +149,9 @@ which is why the idle Antigravity pool still leads and MiniMax follows it rather
    under an explicit relay-provenance preamble, exiting 0 with a result line saying the comment was
    relayed. An exit 3 that reaches you on this shape therefore means the self-salvage also failed;
    the manual procedure (see *Follow-ups*) remains the fallback before you treat the leg as spent.
+   The same posting-step death has also been observed landing on **exit 5** instead — the log's
+   final line didn't match the auto-denied grep — so the harness runs the identical salvage attempt
+   there too, gated only on a captured conversation id rather than on which grep fired.
 
 2. **Claude** — ineligible only when Claude authored the change; for a Codex- or Gemini-authored change
    this is a first-class leg. There is **no bundled harness** — none is needed, because Claude does not
@@ -382,13 +385,17 @@ mid-way to a genuine defect the next leg later confirmed.
 **The relay salvage.** Posting is now the harness's job, so the backtick/quoting family of deaths is
 gone by construction (see *The reviewer never posts*). What remains is the read side: *any* command
 the config does not allow at the posting step — soft-denied in print mode rather than refused
-loudly — ends the run the same way, the exit-3-with-intact-grants shape whose narration tail shows a
-finished verdict (see *The fallback chain*). `tools/agy-review` now runs this salvage **itself** on
-that path: it resumes the run's conversation, has it print the composed review verbatim (running no
-commands, so the denied command cannot kill the resume too), and posts a recovered verdict with
+loudly — ends the run the same way, a composed-but-unposted verdict whose narration tail shows a
+finished review (see *The fallback chain*). It typically lands as exit 3 (permission-denied), but has
+also landed as a bare exit 5 (no-comment) when the final line didn't match the auto-denied grep — a
+family-ai-os PR hit exactly this. `tools/agy-review` now runs this salvage **itself** on *either*
+path: it resumes the run's conversation, has it print the composed review verbatim (running no
+commands, so a denied command cannot kill the resume too), and posts a recovered verdict with
 `gh pr comment` under a relay-provenance preamble — exit 0, result line saying the comment was
-relayed. (Automated 2026-08-15, after the trap fired twice in one day and this manual procedure
-recovered both.) The manual procedure remains the fallback — for a failed self-salvage, or when
+relayed. (Automated for exit 3 on 2026-08-15, after the trap fired twice in one day and this manual
+procedure recovered both; extended to exit 5 the same day, once an audit of family-ai-os turned up
+at least 9 prior PRs the exit-3 shape had hit going back to 2026-07-22, plus the one that landed on
+exit 5 instead.) The manual procedure remains the fallback — for a failed self-salvage, or when
 driving agy raw: ask the resumed run to print the composed review; if a verdict comes back,
 **relay it yourself**: post the reviewer's verdict verbatim with `gh pr comment`,
 naming the reviewer, noting the relay, and including the conversation id — the same pattern the
