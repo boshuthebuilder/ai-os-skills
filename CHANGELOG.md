@@ -4,6 +4,56 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v6.3.0 — 2026-08-15
+
+A **MINOR** for `productivity`'s `ai-writing-audit` skill: the catalogue is re-synced against the
+August 2026 revision of Wikipedia's *Signs of AI writing* essay, and the sync itself becomes
+deterministic — a machine-readable coverage map plus a checker that fails loudly when the essay
+moves on.
+
+The skill shipped in v3.1.0 (2026-07) and had not been touched since, while the essay kept
+growing; the only guard was a prose "Last verified 2026-07" stamp, which is exactly the
+silent-staleness shape `silent-failure-design` warns about — nothing distinguished "still
+current" from "nobody looked". A section-by-section audit against the live essay (revision
+1369390317) found roughly a dozen catalogued signs with no home in the skill, a drifted
+vocabulary layer, four leaked-markup tokens the scanner did not know, and one internal bug:
+REFERENCE.md's band map ended at §14 while a §15 sat outside every band, unscored.
+
+What changed:
+
+- **REFERENCE.md is renumbered §1–§20** (the §-numbers are internal, not part of the versioned
+  interface) and absorbs the missing signs, each with a rewrite move: chat-mode leakage as a new
+  near-decisive §3 (knowledge-cutoff *and* the newer source-availability disclaimers, direct
+  address, refusal residue, unfilled placeholders); document mechanics (§6: Title Case headings,
+  skipped levels, multiple top-level headings, `---` breaks, hollow tables); the "X rather than
+  Y" third parallelism form; outline-like "Despite these challenges… Future Outlook" closers
+  (§8); copulative avoidance promoted from an aside to §12; weasel attribution (§13);
+  significance inflation and canned notability (§14, dissolving the old unbanded §15); elegant
+  variation (§15, prose-only). The era-vocabulary tiers are rebuilt from the essay's current
+  lists (the GPT-4-era tier grows from 6 to 19 words; a Grok tier is new), and a *Calibration*
+  section carries the essay's ineffective indicators and signs of human writing — what not to
+  flag.
+- **`tools/audit.py`** gains a Band-1 chat-mode-leakage table, the new artifact tokens
+  (`oai_citation`, `attributableIndex`, DeepSeek `【…†…】`, `:::writing` — all found *by doing
+  this sync*), count-gated Band-2 patterns so ordinary English ("rather than", "serves as")
+  cannot fire on a single innocent use (with length-scaled gates for the two commonest), and an
+  aggregated Markdown document-mechanics check that strips YAML frontmatter before counting
+  `---` breaks. Same invocation, same output shape, verdict thresholds unchanged.
+- **`tools/coverage.json` + `tools/sync_check.py` (new).** Every essay section maps to a
+  REFERENCE.md section or to a recorded exclusion (wikitext, citation forensics and
+  Wikipedia-process signs are out of scope for general prose — excluded is a visible state, not
+  an omission). Keys are the essay's rename-stable `{{shortcut|WP:…}}` anchors with
+  path-qualified fallbacks; the synced revid lives in the map as the single machine-checkable
+  home of "last verified". The checker makes one MediaWiki API request (parsed section tree +
+  wikitext + revid — the tree is the ground truth, so headings inside the essay's quoted
+  AI-output examples cannot pollute the inventory), diffs live keys against the map, and exits
+  typed: 0 in sync, 1 coverage drift, 2 map error, 3 fetch failure (offline is loud, never
+  "assume in sync"), 4 vocabulary-digest drift (soft — re-verify the era tiers). Stdlib-only,
+  with `certifi` as an optional fallback for Pythons that ship without a CA store.
+
+Interface: additive only — no skill rename, no layout change, `audit.py`'s invocation is
+untouched, and the two new tool files are new surface. Hence MINOR.
+
 ## v6.2.0 — 2026-08-15
 
 A **MINOR** for `coding`'s `adversarial-review` skill: `tools/agy-review`'s relay salvage

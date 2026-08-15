@@ -1,0 +1,639 @@
+{
+ "about": "Machine-readable coverage map: every section of Wikipedia:Signs of AI writing -> where this skill covers it (REFERENCE.md section) or why it deliberately does not. Checked by tools/sync_check.py; regenerate the live side with `sync_check.py --emit`. The revid below is the single home of the 'last verified' fact — SKILL.md and REFERENCE.md point here rather than duplicating it.",
+ "source": {
+  "page": "Wikipedia:Signs_of_AI_writing",
+  "api": "https://en.wikipedia.org/w/api.php",
+  "revid": 1369390317,
+  "verified": "2026-08-15"
+ },
+ "sections": [
+  {
+   "key": "heading:caveats",
+   "heading": "caveats",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "WP:AIDETECTION",
+   "heading": "ai detection tools",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md Calibration"
+  },
+  {
+   "key": "WP:AIDETECTIVE",
+   "heading": "your detection ability",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md Calibration"
+  },
+  {
+   "key": "WP:AIWTW",
+   "heading": "content",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "WP:AILEGACY",
+   "heading": "undue emphasis on significance, legacy, and broader trends",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §14"
+  },
+  {
+   "key": "WP:OVERATTRIBUTION",
+   "heading": "canned emphasis on notability, attribution, and media coverage",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §14"
+  },
+  {
+   "key": "WP:SUPERFICIAL",
+   "heading": "superficial analyses",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §9"
+  },
+  {
+   "key": "WP:AIPUFFERY",
+   "heading": "promotional and advertisement-like language",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §19"
+  },
+  {
+   "key": "heading:content/subtypes",
+   "heading": "subtypes",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §19"
+  },
+  {
+   "key": "WP:AIWEASEL",
+   "heading": "vague attributions and overgeneralization of opinions",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §13"
+  },
+  {
+   "key": "WP:FACESCHALLENGES",
+   "heading": "outline-like conclusions about challenges and future prospects",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §8"
+  },
+  {
+   "key": "heading:content/leads-treating-wikipedia-lists-or-broad-article-titles-as-proper-nouns",
+   "heading": "leads treating wikipedia lists or broad article titles as proper nouns",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia list-article lead convention; the 'refers to' copula dodge itself is §12"
+  },
+  {
+   "key": "heading:content/awards-and-recognition-section",
+   "heading": "\"awards and recognition\" section",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §14"
+  },
+  {
+   "key": "heading:language-and-grammar",
+   "heading": "language and grammar",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "WP:AIVOCAB",
+   "heading": "high density of \"ai vocabulary\" words",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §16"
+  },
+  {
+   "key": "WP:AINOCOPULA",
+   "heading": "avoidance of basic copulatives (\"is\"/\"are\" phrases)",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §12"
+  },
+  {
+   "key": "WP:AIPARALLEL",
+   "heading": "negative parallelisms",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §4"
+  },
+  {
+   "key": "heading:language-and-grammar/not-just-x-but-also-y",
+   "heading": "not just x, but also y",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §4"
+  },
+  {
+   "key": "heading:language-and-grammar/not-x-but-y",
+   "heading": "not x, but y",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §4"
+  },
+  {
+   "key": "heading:language-and-grammar/x-rather-than-y",
+   "heading": "x rather than y",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §4"
+  },
+  {
+   "key": "WP:RO3",
+   "heading": "rule of three",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §7"
+  },
+  {
+   "key": "WP:AIELEVAR",
+   "heading": "lexical diversity/elegant variation",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §15"
+  },
+  {
+   "key": "heading:style",
+   "heading": "style",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "heading:style/title-heading",
+   "heading": "title heading",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §5"
+  },
+  {
+   "key": "WP:AITITLECASE",
+   "heading": "title case",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §6"
+  },
+  {
+   "key": "heading:style/headings-only-containing-other-headings",
+   "heading": "headings only containing other headings",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §6"
+  },
+  {
+   "key": "WP:AIBOLD",
+   "heading": "overuse of boldface",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §5"
+  },
+  {
+   "key": "WP:AILIST",
+   "heading": "inline-header vertical lists",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §5"
+  },
+  {
+   "key": "WP:AIDASH",
+   "heading": "overuse of em dashes",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §20"
+  },
+  {
+   "key": "WP:AIEMOJI",
+   "heading": "emoji as formatting",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §5"
+  },
+  {
+   "key": "WP:AITABLE",
+   "heading": "unusual use of tables",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §6"
+  },
+  {
+   "key": "WP:AICURLY",
+   "heading": "curly quotation marks and apostrophes",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §20"
+  },
+  {
+   "key": "heading:style/skipping-heading-levels",
+   "heading": "skipping heading levels",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §6"
+  },
+  {
+   "key": "heading:style/overuse-of-level-1-headings",
+   "heading": "overuse of level 1 headings",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §6"
+  },
+  {
+   "key": "heading:style/thematic-breaks-between-sections",
+   "heading": "thematic breaks between sections",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §6"
+  },
+  {
+   "key": "heading:communication-intended-for-the-user",
+   "heading": "communication intended for the user",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "WP:CERTAINLY",
+   "heading": "collaborative communication",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §3, §11"
+  },
+  {
+   "key": "WP:AICUTOFF",
+   "heading": "knowledge-cutoff disclaimers and speculation about gaps in sources",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §3"
+  },
+  {
+   "key": "WP:AIPLACEHOLDER",
+   "heading": "phrasal templates and placeholder text",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §3"
+  },
+  {
+   "key": "heading:markup",
+   "heading": "markup",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "WP:MARKDOWN",
+   "heading": "use of markdown",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Markdown-in-wikitext leakage; Markdown is this skill's native document format, not a tell"
+  },
+  {
+   "key": "heading:markup/broken-wikitext",
+   "heading": "broken wikitext",
+   "level": 3,
+   "status": "excluded",
+   "reason": "wikitext syntax forensics"
+  },
+  {
+   "key": "WP:OAICITE",
+   "heading": "internal formatting and reference markup bugs",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §1"
+  },
+  {
+   "key": "heading:markup/chatgpt-contentreference-oaicite-oai-citation-1-turn0search0-attributableindex",
+   "heading": "chatgpt: contentreference, oaicite/oai_citation, +1, turn0search0, attributableindex",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §1"
+  },
+  {
+   "key": "WP:STARTSPAN",
+   "heading": "gemini: [cite: 1], [span_1](start_span)",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §1"
+  },
+  {
+   "key": "WP:GROKCARD",
+   "heading": "grok: grok_card, grok_render_citation_card_json",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §1"
+  },
+  {
+   "key": "heading:markup/deepseek-lenticular-brackets-dagger-symbols",
+   "heading": "deepseek: lenticular brackets, dagger symbols",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §1"
+  },
+  {
+   "key": "heading:markup/perplexity-attached-file-ppl-ai-file-upload",
+   "heading": "perplexity: attached_file, ppl-ai-file-upload",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §1"
+  },
+  {
+   "key": "heading:markup/unclassified-writing",
+   "heading": "unclassified: :::writing",
+   "level": 4,
+   "status": "covered",
+   "ref": "REFERENCE.md §1"
+  },
+  {
+   "key": "WP:AIREDCAT",
+   "heading": "non-existent or out-of-place categories",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia category system"
+  },
+  {
+   "key": "heading:markup/non-existent-templates",
+   "heading": "non-existent templates",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia template system"
+  },
+  {
+   "key": "heading:markup/links-to-searches",
+   "heading": "links to searches",
+   "level": 4,
+   "status": "excluded",
+   "reason": "Wikipedia search-link recipes for patrolling"
+  },
+  {
+   "key": "WP:AIFICTREF",
+   "heading": "citations",
+   "level": 2,
+   "status": "excluded",
+   "reason": "citation forensics (fabricated refs); prose auditing verifies claims, not identifiers"
+  },
+  {
+   "key": "heading:citations/broken-external-links",
+   "heading": "broken external links",
+   "level": 3,
+   "status": "excluded",
+   "reason": "citation forensics"
+  },
+  {
+   "key": "heading:citations/invalid-doi-and-isbns",
+   "heading": "invalid doi and isbns",
+   "level": 3,
+   "status": "excluded",
+   "reason": "citation forensics"
+  },
+  {
+   "key": "heading:citations/dois-that-lead-to-unrelated-articles",
+   "heading": "dois that lead to unrelated articles",
+   "level": 3,
+   "status": "excluded",
+   "reason": "citation forensics"
+  },
+  {
+   "key": "heading:citations/book-citations-without-page-numbers-or-urls",
+   "heading": "book citations without page numbers or urls",
+   "level": 3,
+   "status": "excluded",
+   "reason": "citation forensics"
+  },
+  {
+   "key": "WP:AICITESTYLE",
+   "heading": "incorrect or unconventional use of references",
+   "level": 3,
+   "status": "excluded",
+   "reason": "wikitext reference markup"
+  },
+  {
+   "key": "heading:citations/utm-source",
+   "heading": "utm_source=",
+   "level": 3,
+   "status": "excluded",
+   "reason": "URL forensics (utm_source=chatgpt.com); not prose"
+  },
+  {
+   "key": "heading:citations/links-to-searches",
+   "heading": "links to searches",
+   "level": 4,
+   "status": "excluded",
+   "reason": "Wikipedia search-link recipes for patrolling"
+  },
+  {
+   "key": "heading:citations/named-references-declared-in-references-section-but-unused-in-article-body",
+   "heading": "named references declared in references section but unused in article body",
+   "level": 3,
+   "status": "excluded",
+   "reason": "wikitext reference markup"
+  },
+  {
+   "key": "WP:AICOMMENT",
+   "heading": "comment-specific indicators",
+   "level": 2,
+   "status": "excluded",
+   "reason": "Wikipedia talk-page comments"
+  },
+  {
+   "key": "WP:AISUMMARY",
+   "heading": "edit summaries",
+   "level": 2,
+   "status": "excluded",
+   "reason": "Wikipedia edit summaries"
+  },
+  {
+   "key": "heading:edit-summaries/general-examples",
+   "heading": "general examples",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia edit summaries"
+  },
+  {
+   "key": "heading:edit-summaries/canned-assurance-of-adherence-to-wikipedia-policies-and-guidelines",
+   "heading": "canned assurance of adherence to wikipedia policies and guidelines",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia edit summaries"
+  },
+  {
+   "key": "heading:edit-summaries/specific-mentions-of-preserved-or-retained-information",
+   "heading": "specific mentions of \"preserved\" or \"retained\" information",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia edit summaries"
+  },
+  {
+   "key": "heading:edit-summaries/overemphasis-on-presence-reliability-of-citations",
+   "heading": "overemphasis on presence/reliability of citations",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia edit summaries"
+  },
+  {
+   "key": "heading:edit-summaries/reference-to-afc-review",
+   "heading": "reference to afc review",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia AfC process"
+  },
+  {
+   "key": "heading:miscellaneous",
+   "heading": "miscellaneous",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "heading:miscellaneous/pronounced-shift-in-writing-style",
+   "heading": "pronounced shift in writing style",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md Scoring"
+  },
+  {
+   "key": "heading:miscellaneous/submission-statements-in-afc-drafts",
+   "heading": "\"submission statements\" in afc drafts",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia AfC process"
+  },
+  {
+   "key": "WP:AIDECLINE",
+   "heading": "pre-placed maintenance templates",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia maintenance templates"
+  },
+  {
+   "key": "WP:AIUSERPAGE",
+   "heading": "canned user pages",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia user pages"
+  },
+  {
+   "key": "heading:miscellaneous/permissions-gaming",
+   "heading": "permissions gaming",
+   "level": 3,
+   "status": "excluded",
+   "reason": "Wikipedia permissions process"
+  },
+  {
+   "key": "heading:miscellaneous/differences-between-llms",
+   "heading": "differences between llms",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md Model fingerprints"
+  },
+  {
+   "key": "heading:signs-of-human-writing",
+   "heading": "signs of human writing",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "heading:signs-of-human-writing/age-of-text-relative-to-chatgpt-launch",
+   "heading": "age of text relative to chatgpt launch",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md Calibration"
+  },
+  {
+   "key": "heading:signs-of-human-writing/ability-to-explain-one-s-own-editorial-choices",
+   "heading": "ability to explain one's own editorial choices",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md Calibration"
+  },
+  {
+   "key": "heading:signs-of-human-writing/syntax",
+   "heading": "syntax",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md Calibration"
+  },
+  {
+   "key": "heading:ineffective-indicators",
+   "heading": "ineffective indicators",
+   "level": 2,
+   "status": "covered",
+   "ref": "REFERENCE.md Calibration"
+  },
+  {
+   "key": "heading:historical-indicators",
+   "heading": "historical indicators",
+   "level": 2,
+   "status": "container"
+  },
+  {
+   "key": "WP:DIDACTIC",
+   "heading": "didactic disclaimers (november 2022–2024)",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §17"
+  },
+  {
+   "key": "WP:CONCLUSION",
+   "heading": "section summaries",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §8"
+  },
+  {
+   "key": "heading:historical-indicators/prompt-refusal",
+   "heading": "prompt refusal",
+   "level": 3,
+   "status": "covered",
+   "ref": "REFERENCE.md §3"
+  },
+  {
+   "key": "heading:historical-indicators/abrupt-cut-offs",
+   "heading": "abrupt cut offs",
+   "level": 3,
+   "status": "excluded",
+   "reason": "historical truncation artifact of pre-2025 context limits; no longer produced"
+  },
+  {
+   "key": "heading:historical-indicators/outdated-access-date-parameters",
+   "heading": "outdated access-date parameters",
+   "level": 3,
+   "status": "excluded",
+   "reason": "citation-field forensics"
+  },
+  {
+   "key": "heading:see-also",
+   "heading": "see also",
+   "level": 2,
+   "status": "boilerplate"
+  },
+  {
+   "key": "heading:notes",
+   "heading": "notes",
+   "level": 2,
+   "status": "boilerplate"
+  },
+  {
+   "key": "heading:references",
+   "heading": "references",
+   "level": 2,
+   "status": "boilerplate"
+  },
+  {
+   "key": "heading:further-reading",
+   "heading": "further reading",
+   "level": 2,
+   "status": "boilerplate"
+  },
+  {
+   "key": "heading:external-links",
+   "heading": "external links",
+   "level": 2,
+   "status": "boilerplate"
+  }
+ ],
+ "vocab_digest": {
+  "key": "WP:AIVOCAB",
+  "terms": 32,
+  "sha256": "d9bcad953e371a1644a5993b5586d5ffed74f17d60bea60d6a40ab12f45a39fa"
+ }
+}
