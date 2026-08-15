@@ -122,7 +122,7 @@ which is why the idle Antigravity pool still leads and MiniMax follows it rather
    |---|---|---|
    | 0 | ok | comment is on the PR — read it, address it |
    | 2 | auth-needed | run `agy` once interactively to sign in, retry |
-   | 3 | permission-denied | grants missing a rule → restore (*Machine setup*), retry; grants intact → read the narration tail: a posting-step denial → relay salvage (*Follow-ups*), else autopsy for the invented command (below) |
+   | 3 | permission-denied | grants missing a rule → restore (*Machine setup*), retry; grants intact → the harness has already run the relay salvage itself (a recovered verdict posts and exits 0, not 3), so autopsy for the invented command (below); the manual salvage (*Follow-ups*) stays the fallback |
    | 4 | timeout | treat this leg as done; advance the chain |
    | 5 | no-comment | narration tail is printed for diagnosis; advance the chain |
    | 6 | bad-args / missing prerequisites | fix the invocation |
@@ -143,9 +143,12 @@ which is why the idle Antigravity pool still leads and MiniMax follows it rather
    `bash -c` reaching to test a shell semantic empirically (see *The headless-reviewer contract*). A
    tail that instead shows a **finished verdict whose only denial was the posting step** — the review
    is composed, and a command the config does not allow was soft-denied as it tried to post (the
-   print-mode shape) — is not an invented-command death at all: the first response is the **relay
-   salvage** (see *Follow-ups*), recovering the composed review from the kept conversation and
-   relaying it, before you treat the leg as spent.
+   print-mode shape) — is not an invented-command death at all, and the harness **self-recovers** it:
+   before returning exit 3 it resumes the kept conversation, asks it to print the composed review
+   verbatim (running no commands), and — when a verdict comes back — posts it with `gh pr comment`
+   under an explicit relay-provenance preamble, exiting 0 with a result line saying the comment was
+   relayed. An exit 3 that reaches you on this shape therefore means the self-salvage also failed;
+   the manual procedure (see *Follow-ups*) remains the fallback before you treat the leg as spent.
 
 2. **Claude** — ineligible only when Claude authored the change; for a Codex- or Gemini-authored change
    this is a first-class leg. There is **no bundled harness** — none is needed, because Claude does not
@@ -377,11 +380,17 @@ opaque typed failure into the missing grant — and once revealed that the dying
 mid-way to a genuine defect the next leg later confirmed.
 
 **The relay salvage.** Posting is now the harness's job, so the backtick/quoting family of deaths is
-gone by construction (see *The reviewer never posts*). What remains is the read side: *any* command the config does not allow at the posting step — soft-denied in print mode
-rather than refused loudly — ends the run the same way, the exit-3-with-intact-grants shape whose
-narration tail shows a finished verdict (see *The fallback chain*). When an autopsy shows a finished verdict
-that simply failed to post, first ask the resumed run to re-post with a plainer body; if that is
-denied too, **relay it yourself**: post the reviewer's verdict verbatim with `gh pr comment`,
+gone by construction (see *The reviewer never posts*). What remains is the read side: *any* command
+the config does not allow at the posting step — soft-denied in print mode rather than refused
+loudly — ends the run the same way, the exit-3-with-intact-grants shape whose narration tail shows a
+finished verdict (see *The fallback chain*). `tools/agy-review` now runs this salvage **itself** on
+that path: it resumes the run's conversation, has it print the composed review verbatim (running no
+commands, so the denied command cannot kill the resume too), and posts a recovered verdict with
+`gh pr comment` under a relay-provenance preamble — exit 0, result line saying the comment was
+relayed. (Automated 2026-08-15, after the trap fired twice in one day and this manual procedure
+recovered both.) The manual procedure remains the fallback — for a failed self-salvage, or when
+driving agy raw: ask the resumed run to print the composed review; if a verdict comes back,
+**relay it yourself**: post the reviewer's verdict verbatim with `gh pr comment`,
 naming the reviewer, noting the relay, and including the conversation id — the same pattern the
 Claude and Codex legs (which post nothing themselves) use routinely. The gate's requirement is an
 auditable verdict on the PR, not that the reviewer's own process wrote the bytes.

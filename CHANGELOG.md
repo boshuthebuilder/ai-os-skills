@@ -4,6 +4,24 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v6.1.0 — 2026-08-15
+
+A **MINOR** for `coding`'s `adversarial-review` skill: `tools/agy-review` now self-recovers from
+the known exit-3 posting-step trap instead of just diagnosing it.
+
+The trap: a headless soft-deny can land *after* the reviewer has composed its verdict — it reaches
+for a command at the final (posting) step, gets auto-denied, and dies without ever printing the
+marked review, leaving the verdict stranded inside the kept conversation. This fired twice on
+2026-08-14 (family-ai-os PRs #854 and #856); the documented manual recovery (resume the
+conversation, ask it to print the review verbatim, relay it via `gh pr comment`) worked both
+times. The harness now performs that exact procedure itself on the exit-3, posting-step shape:
+it resumes the run's conversation with a no-tools prompt, and — when a verdict comes back —
+posts it under an explicit relay-provenance preamble and exits 0, with the result line saying the
+comment was relayed. Exit 3 is unchanged for the case where the self-salvage also fails (or the
+grants were genuinely missing at pre-flight); the manual procedure in the skill's *Follow-ups*
+section remains the documented fallback. No contract change — same invocation, same typed exits,
+same artifact-based verification.
+
 ## v6.0.0 — 2026-08-14
 
 A **MAJOR** for `wiki-maintenance` (plus the layout guidance it shares with `wiki-onboarding`),
