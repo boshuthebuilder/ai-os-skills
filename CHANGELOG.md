@@ -4,6 +4,25 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v6.2.0 — 2026-08-15
+
+A **MINOR** for `coding`'s `adversarial-review` skill: `tools/agy-review`'s relay salvage
+(introduced in v6.1.0) now also fires on exit 5, not just exit 3.
+
+An audit of family-ai-os prompted by the v6.1.0 fix found the posting-step trap had hit at least
+9 PRs since 2026-07-22, not just the two 2026-08-14 incidents that motivated the original fix —
+and one of them ([#574](https://github.com/boshuthebuilder/family-ai-os/pull/574)) landed on a
+bare **exit 5 (no-comment)** instead of exit 3: the composed-but-unposted verdict is the same
+shape, but the harness's final log line didn't match the exit-3 `auto-denied` grep, so v6.1.0's
+salvage — gated on that classification — never ran. The salvage attempt is refactored into a
+shared `attempt_relay_salvage` function and is now gated only on whether a conversation id was
+captured at all, called from both the exit-3 and exit-5 branches before either concedes. It is
+safe to call when nothing was actually composed (an invented-command death, a window-burn): the
+resumed run is told to run no tools, and the existing verdict-line gate refuses to relay a resume
+with no `APPROVE`/`CHANGES-REQUESTED`, so a doomed attempt costs a few wasted seconds rather than
+a false relay. No contract change — same invocation, same typed exits, same artifact-based
+verification.
+
 ## v6.1.0 — 2026-08-15
 
 A **MINOR** for `coding`'s `adversarial-review` skill: `tools/agy-review` now self-recovers from
