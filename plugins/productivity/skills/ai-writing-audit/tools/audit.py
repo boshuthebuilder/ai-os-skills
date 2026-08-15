@@ -172,6 +172,9 @@ def doc_mechanics(text: str) -> list[str]:
     stops correlated symptoms from counting as several independent cluster members.
     """
     text = strip_frontmatter(text)
+    # Blank fenced code blocks: a `# comment` or `---` at column 0 inside a fence is
+    # code, not a heading or a thematic break.
+    text = re.sub(r"(?ms)^(```|~~~).*?^\1[^\n]*$", "", text)
     findings: list[str] = []
 
     headings = [(len(m.group(1)), m.group(2).strip())

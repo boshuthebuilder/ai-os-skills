@@ -182,6 +182,8 @@ def load_map(path: Path) -> dict:
         raise ValueError("coverage map has no 'sections' list")
     seen: set[str] = set()
     for entry in sections:
+        if not isinstance(entry, dict):
+            raise ValueError(f"invalid section entry (not an object): {entry!r}")
         key, status = entry.get("key"), entry.get("status")
         if not key or key in seen:
             raise ValueError(f"missing or duplicate key in coverage map: {key!r}")
