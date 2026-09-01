@@ -61,13 +61,52 @@ Project/
 ```
 
 Every such link works in Typora, which resolves on the filesystem, and is dead in Obsidian. No
-encoding, extension or escaping changes that. **It is a property of where the vault is rooted, not of
-the page** — so treat it as a configuration finding, not a defect to repair. If your generator lints
-links, report this class *separately* from the repairable ones: fold it in and you invite a mass
-rewrite of working links to satisfy a setting nobody has chosen. In the case this skill came from that
-would have been 120 of them.
+encoding, extension or escaping changes that — it is a property of **where the vault is rooted**, not
+of the page. So it is a decision before it is a defect, and there are exactly two resolutions:
 
-The fix, when someone wants one, is to root the vault at the parent (`Project/`) so both are inside it.
+| | what you get | what it costs |
+|---|---|---|
+| **Root the vault at the parent** (`Project/`) | every existing link works, in both editors and on mobile; no content changes at all | the vault now contains the documents — file tree, search and the "open note" list fill with them |
+| **Keep the vault, and NAME instead of link** — state the path in backticks, link only to other notes in the vault | the vault stays a vault; works in every editor and on mobile | clicks become copies: the reader sees the path and opens it themselves |
+
+The deciding number is usually **how much lives beside the vault**. In the case this skill came from,
+rooting at the parent would have taken the vault from 28 indexed notes to 42 — but dragged **1,585
+PDFs** and every household folder into the file tree, so the owner chose to keep the vault and name
+the paths.
+
+**If you choose to name rather than link, `outside_vault` becomes a repairable defect** and your
+generator should report it as one. Before that choice it must NOT be — folding it in early invites a
+mass rewrite of working links to satisfy a setting nobody has chosen. Report it as a named count until
+the decision exists, then flip it.
+
+Two things make the conversion cheap, and are worth checking before you dread it:
+
+- These links almost always carry the path as their own **link text** already
+  (`[Marriage/Ceremony/](../../Marriage/Ceremony/)`), so `` `Marriage/Ceremony/` `` loses nothing.
+- It retires most of your encoding defects **by construction**. Every one of the `%26` failures in
+  that wiki was on a link that escaped the vault; a rule that stops linking out stops producing them.
+
+### The plugin route, and why it is not a free win
+
+Obsidian community plugins *can* reach outside the vault — the one encountered here,
+`external-file-embed-and-link`, describes itself as exactly that. Read its code before adopting it:
+it registers **code-block processors** (`LinkRelativeToVault`, `EmbedRelativeToHome`, …), so a link is
+
+````
+```LinkRelativeToVault
+../Health & Medical/report.pdf
+```
+````
+
+which is not a markdown link. Typora renders it as a literal code block, and its manifest declares
+`isDesktopOnly: true`, so mobile loses it. For a **generated** document that has to survive several
+readers, that trades one editor for another. For hand-written notes in a single desktop Obsidian, it
+is a reasonable choice.
+
+Symlinking the documents into the vault is the other tempting escape. Check what your own tooling does
+with symlinks first: in the deployment this came from, every wiki sweep resolves each page and skips
+any whose real path escapes the vault root, so symlinked content would have been silently invisible to
+the orphan, freshness and link checks — a visible problem traded for a quiet one.
 
 ## Link destinations
 
