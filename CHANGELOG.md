@@ -40,6 +40,13 @@ ambiguity into the Schema; preprocessing it runs a conveyor over files the owner
 No skill was renamed or removed; no placeholder became required (`curate.md` uses only the required
 core). `manifest-schema.md` keeps its path; `/1` files remain valid.
 
+Two documentation fixes ride along, unrelated to `folder-curation` and changing no contract. The
+`coding` direction's README section claimed "Four skills" above five bullets, and
+`iterative-acceptance` — shipped in v4.2.0 — had no bullet at all and was named in neither
+`plugins/coding/.claude-plugin/plugin.json` nor `.claude-plugin/marketplace.json`; all three now
+list the six skills that are actually there. And the `file-preprocessing` naming example now uses
+an invented party name, per this repo's own generic-always rule.
+
 ## v6.4.0 — 2026-09-01
 
 A **MINOR** for `productivity`'s `portable-markdown` skill: the vault-boundary section stops

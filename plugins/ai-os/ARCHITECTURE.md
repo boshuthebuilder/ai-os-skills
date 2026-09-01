@@ -222,7 +222,7 @@ detail — any AI-OS deployment reproduces the defect unless the spec requires t
   mechanism: `what_would_resolve` is what makes the item stop being true — which a later run, or the
   clock, may satisfy — while `owner_action` is the part of that only a person can do. So
   `owner_action` is always a subset of `what_would_resolve`, and its **null** is the load-bearing
-  value: it is the one thing `what_would_resolve` cannot express, because "Jiayu's page is updated
+  value: it is the one thing `what_would_resolve` cannot express, because "Wren's page is updated
   after the appointment" is a real resolution that asks nothing of anybody today.
   This supersedes the calibration it replaces ("a true action is rare; when in doubt, inform quietly").
   A rule phrased in adverbs is re-judged every run; a rule phrased as a question about who can act has

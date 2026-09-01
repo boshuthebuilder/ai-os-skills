@@ -281,7 +281,7 @@ Work through these steps; every step except **Understand** is deterministic.
    failed reduce leaves the groups' own judgements standing.
 8. **Name and place — deterministically, from the fields.** Filename pattern:
    `<Party> - <DocType> <YYYY-MM-DD> <Detail>.<ext>` (e.g.
-   `Jiayu - Lab Report 2026-03-14 CA125.pdf`). Fallbacks are fixed: unknown party → `Unknown`; no
+   `Wren - Lab Report 2026-03-14 Vitamin D.pdf`). Fallbacks are fixed: unknown party → `Unknown`; no
    trustworthy date → the date segment is omitted, never fabricated; empty detail → omitted. Keep
    the extension, lowercased. Sanitise every segment (NFC-normalise; strip path separators,
    control characters, trailing dots/spaces; cap length in UTF-8 bytes — filesystem limits are

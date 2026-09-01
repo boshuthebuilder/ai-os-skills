@@ -27,7 +27,7 @@ a `/1` file treats every added field as absent. The schema string is
 |---|---|---|
 | `id` | string | the sha256 hex, equal to the entry's key |
 | `original_name` | string | the filename as dropped, before any rename |
-| `current_path` | string | folder-relative path today, e.g. `Medical/Jiayu - Lab Report 2026-03-14 CA125.pdf` |
+| `current_path` | string | folder-relative path today, e.g. `Medical/Wren - Lab Report 2026-03-14 Vitamin D.pdf` |
 | `rename_history` | list | `{path, at, run_id}` per placement, oldest first |
 | `category` | string | the category folder name |
 | `title` | string | one-line title |

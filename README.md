@@ -53,10 +53,10 @@ that agent's skills path.
 
 ## The `coding` direction
 
-Four skills for the development process itself, in any repo executed by coding agents. One theme
+Six skills for the development process itself, in any repo executed by coding agents. One theme
 runs through them: move judgment upstream into artifacts, so cheaper agents become safe to use.
 They span the lifecycle — **plan** (tier the work), **build** (lock the design, discipline the
-change), **gate** (review the change):
+change, iterate to acceptance), **gate** (review the change), **verify** (prove the control ran):
 
 - **`agent-tiered-planning`** — label every issue with an `agent:standard|senior|frontier`
   capability tier orthogonal to its effort estimate; publish a playbook cold agents read before
@@ -78,6 +78,14 @@ change), **gate** (review the change):
   hunks), and the task restated as verifiable success criteria with a step-then-verify plan. The
   authoring-side counterpart of the review gate's scope-and-shape lens; binds every tier, and
   matters most where supervision is thinnest.
+- **`iterative-acceptance`** — how to build on a nondeterministic tool (an LLM, OCR, a vision
+  model) when the expectations cannot be specified up front and only surface on contact with real
+  output. Iterate real runs against a **frozen baseline** whose byte-identity is checked around
+  every experiment, with predictions **registered before** each run and scored honestly after it;
+  park all state so context comes only from the operator's prompt (the blank-slate protocol); turn
+  every miss into a systematic capability rather than a hack for the test data; and keep batch
+  knowledge in the prompt channel while fixes live in code. For any pipeline whose core step is a
+  model call — document processing, extraction, classification, synthesis.
 - **`silent-failure-design`** — design and audit controls so that one which never ran is
   distinguishable from one that ran and passed. The failure class where absence wears the appearance
   of success: CI never scheduled, a watchdog whose exception is swallowed, a guard that cannot start
