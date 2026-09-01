@@ -4,6 +4,41 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v6.4.0 — 2026-09-01
+
+A **MINOR** for `productivity`'s `portable-markdown` skill: the vault-boundary section stops
+recommending one fix and presents the decision it actually is.
+
+v5.x told a generator to report an out-of-vault link as "a configuration finding, not a defect to
+repair", and named a single resolution — root the Obsidian vault at the parent folder so the
+documents fall inside it. That is sound where the parent is small. Driven on a real deployment it
+was not: rooting the vault there would have taken it from 28 notes to 42 while pulling **1,585
+PDFs** and every household folder into the file tree, so the owner rejected it and chose the other
+resolution instead — keep the vault, state out-of-vault paths as text, and link only to other notes
+in the vault. The skill had nothing to say about that choice, and its "do not repair" advice was
+actively wrong once it was made.
+
+What changed in `SKILL.md`:
+
+- **Two resolutions, in a table with what each costs** — root at the parent, or name rather than
+  link — with the deciding question named (how much lives beside the vault) and the measured
+  numbers from the case behind it.
+- **`outside_vault` becomes repairable *after* the decision, and must not be before it.** The old
+  advice (report it apart from the repairable kinds) is now correct only for the pre-decision state,
+  which is what it always meant; folding it in early still invites a mass rewrite of working links
+  to satisfy a setting nobody has chosen.
+- **Two reasons the conversion is cheaper than it looks**: these links usually carry the path as
+  their own link text already, so backticking it loses nothing; and it retires most encoding defects
+  by construction — every `%26` failure in that wiki was on a link that escaped the vault.
+- **A new subsection on the escapes that do not work.** The Obsidian community plugin that reads
+  outside the vault does it through code-block processors, not markdown links, so Typora renders the
+  block literally and its manifest is desktop-only; and symlinking fails wherever a generator's own
+  sweeps resolve a page's real path and skip what escapes the vault root — a visible problem traded
+  for a silent one.
+
+`REFERENCE.md` gains the matching *Escapes that do not work* table. No skill name, frontmatter
+contract, archetype layout or placeholder changed.
+
 ## v6.3.0 — 2026-08-15
 
 A **MINOR** for `productivity`'s `ai-writing-audit` skill: the catalogue is re-synced against the

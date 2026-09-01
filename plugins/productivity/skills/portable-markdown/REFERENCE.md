@@ -40,6 +40,17 @@ target. Nothing was written in the observed case, but treat the click as a write
 The same links all open in Typora, which resolves on the filesystem. This asymmetry is the single
 biggest portability trap for a generated document, and it is invisible to any syntax check.
 
+### Escapes that do not work
+
+| escape | verdict |
+|---|---|
+| `external-file-embed-and-link` plugin (v1.5.9) | reads outside the vault, but only through **code-block processors** (` ```LinkRelativeToVault `) — not a markdown link. Typora renders the block literally, and `isDesktopOnly: true` in its manifest drops mobile |
+| symlink the documents into the vault | Obsidian follows it, but any generator sweep that resolves a page's real path and skips what escapes the vault root goes blind to the linked content — a visible failure traded for a silent one |
+| `file:///…` absolute URL | opens only on the machine that generated it |
+
+The two resolutions that do work are in SKILL.md: root the vault at the parent, or state the path as
+text and link only inside the vault. Both are decisions about the vault, not repairs to the page.
+
 ## Documented rules
 
 | rule | source |
