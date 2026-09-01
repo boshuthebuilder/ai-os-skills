@@ -9,7 +9,9 @@ description: >-
   user-synthesis — use this when onboarding a person/identity who wants a synthesised
   cross-project view (a user-tier wiki / second brain) over the project wikis they can access — and
   code (a git-backed project the system reads read-only and reports on: a periodic `digest` + a
-  `code-review`, no `ingest`). For
+  `code-review`, no `ingest`) and folder-curation (a deterministic periodic audit plus a propose-only
+  curate over a curated folder). For a lived-in folder that needs tidying before a wiki can route it,
+  run folder-curation first. For
   just the wiki skeleton use wiki-onboarding, and for the ongoing loop use wiki-maintenance.
 ---
 
@@ -31,6 +33,8 @@ templates to copy. See [`ARCHITECTURE.md`](../../ARCHITECTURE.md) for the why.
 
 - A folder is being adopted into an AI-OS-style setup and needs both a wiki and its maintenance jobs.
 - A folder already has a wiki but no scheduled ingest/reconcile, and you want to add the standard pair.
+- A lived-in folder whose read-only scan shows overlapping homes, duplicate trees or root strays: run
+  **folder-curation** first, then this skill.
 
 For just the wiki skeleton, use **wiki-onboarding**. For running an existing wired project, use
 **wiki-maintenance**.
@@ -47,9 +51,13 @@ When onboarding is done, the folder has:
 - the owner's own material, **read in place, never reorganised**;
 - a **wiki** with a Schema (its constitution), Index, Log, and domain pages;
 - an **inbox / drop folder** where new items land;
+- optionally an **audit pair** (`_Audit/manifest.json` + `AUDIT.md`) and a **rulebook** at the root
+  recording the curation depth, class policy, naming rules and exclusions, when the folder went
+  through folder-curation;
 - two jobs declared in the project's config:
   - **`ingest`** — `mode: ingest`, reactive (runs after an inbox or calendar change), drains the inbox;
   - **`reconcile`** — `mode: reconcile`, periodic (e.g. weekly), reckons the whole wiki to the files;
+  - and, on a curated folder, the folder-curation archetype's periodic **`audit`**;
 - the **`wiki-maintenance`** skill declared as the project's capability, so both jobs share one home
   for the conventions.
 
@@ -62,6 +70,12 @@ List the folder's top-level structure and natural domains — exactly the read-o
 file-ingest project at all: the archetype fits a folder of accumulating documents that benefits from a
 synthesised, queryable wiki. A folder that is pure code, or has no documents to summarise, doesn't
 need it — don't impose the archetype where the material doesn't justify it.
+
+**Assess, and curate if needed.** If the scan finds any of: one subject with more than one home, a
+duplicate tree, strays at the root, AI artefacts beside sources, or a working format the system
+cannot read, stop and run **folder-curation** before step 2. Its verify step, not this skill, decides
+when the folder is ready; onboarding a folder that still has two homes for one subject writes that
+ambiguity into the Schema's routing table, where it stays.
 
 ### 2. Ensure a wiki exists — onboard one only if it doesn't
 
@@ -93,6 +107,9 @@ Copy the archetype from `archetypes/file-ingest/` and fill in the project's spec
   run on a **periodic** cadence. The concrete timer is your deployment's (a launch agent, a cron
   entry, a person). Confirm the reactive ingest runs in a context that can actually write the wiki
   (see the execution-context note in `ARCHITECTURE.md`).
+
+On a curated folder also stamp the folder-curation archetype's `audit` (deterministic, periodic) so
+drift stays visible; see `archetypes/folder-curation/`.
 
 ### 4. Register and declare
 
@@ -128,4 +145,5 @@ one-time; maintenance is ongoing.
   deployment's deterministic guards (write-guard, in-folder path check) are what enforce it at run
   time — keep those in code, not prose.
 - **Read in place, never reorganise.** The owner's files stay where they are; onboarding adds a wiki
-  and jobs beside them, nothing more.
+  and jobs beside them, nothing more. Reorganisation is a separate, owner-approved act that precedes
+  onboarding (folder-curation), never something a maintenance job does.

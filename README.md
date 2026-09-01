@@ -105,18 +105,20 @@ once, return a structured result that deterministic guards turn into changes), t
 of a job (prompt template · skill · deterministic guards), the determinism boundary, the gate
 that runs a cheap deterministic check before any model call, and reactive vs periodic scheduling.
 Each job family is an **archetype** with its own write contract — knowledge synthesis is the
-first, but folder hygiene, drafting, or any other family flows through the same layers and the
-same gate. The reference deployment is
+first, and **folder hygiene** is now the fourth (a deterministic audit plus a propose-only curate);
+drafting, or any other family, flows through the same layers and the same gate. The reference
+deployment is
 [`family-ai-os`](https://github.com/boshuthebuilder/family-ai-os), which consumes this repo as a
 pinned dependency.
 
 The first archetype implements the **in-folder knowledge wiki**: a synthesised, always-current
-layer over a folder of real files. Four skills cover the lifecycle:
+layer over a folder of real files. Five skills cover the lifecycle:
 
 - **`project-onboarding`** — stand up a self-maintaining folder end to end: create its wiki (via
   `wiki-onboarding`) and wire the two standard maintenance jobs — a reactive `ingest` pass and a
   periodic `reconcile` pass — from the **file-ingest archetype**. The whole-project flow; composes
-  the two skills below. Also home to the job archetypes (file-ingest, user-synthesis, code).
+  the two skills below. Also home to the job archetypes (file-ingest, user-synthesis, code,
+  folder-curation).
 - **`user-onboarding`** — onboard a *person* (an identity) rather than a folder: the
   storage-ownership handshake (the user owns the folder and shares it into the worker), the
   **type-1 user vault** ("second brain") skeleton, and stamping the **user-synthesis archetype**
@@ -132,6 +134,13 @@ layer over a folder of real files. Four skills cover the lifecycle:
   wiki's own Schema page is the authority for its exact pages and layout. Includes the provenance
   model, the never-overwrite-a-human-edit guard, and a sensitive-data rule (identifiers as last-4
   only).
+- **`folder-curation`** — adopt a **lived-in** folder, the one between a drop folder and a tidy
+  one. The audit half is deterministic and repeatable: a hash-keyed manifest over the whole library
+  with type classes, duplicate groups that know a submission pack from a redundant copy,
+  overlapping homes, and drift since the last pass. The curate half is **propose-only** — an
+  interview on a fixed depth ladder, then a move-plan the owner approves row by row, executed under
+  the shared move guards and proved by a re-audit. Hands off to `project-onboarding` when the verify
+  step is clean, and the audit keeps running afterwards as the project's periodic `audit` job.
 
 ### Using it in a Cowork session
 

@@ -55,6 +55,15 @@ not the owner's documents or other wikis). It reaffirms the boundary: gather rea
 the only writes are report pages through the deployment's guards — never to the code. A code project
 offers no `ingest`, since its source is a clone, not an inbox of documents.
 
+The fourth is **folder-curation** (`plugins/ai-os/skills/project-onboarding/archetypes/folder-curation/`):
+a deterministic periodic `audit` (a hashing walk under the shared scan contract, rendered to an audit
+pair; no model call at all) and a propose-only `curate` (one model call over the audit, returning a
+move-plan the owner approves row by row). It is the folder-hygiene family this document anticipated,
+and it fixes the contract in two places the others do not reach: a job may sit *entirely* below the
+determinism boundary and still be a job (scheduled, counted, fail-loud), and a job may touch the
+owner's own material only by **proposing** rows that a separate, owner-triggered execution applies
+under guards. Curation precedes onboarding; the `folder-curation` skill is the method.
+
 The names are the same as the modes: a job's `id` equals its `mode`, so there is no third vocabulary.
 
 ## The three layers of a job
@@ -88,7 +97,10 @@ its forward view is a pure function of the snapshot; rebuilding it through the m
 waste and a source of churn, so it is rolled up deterministically exactly like Deadlines and the
 prompt templates are told not to build it. Only the *understanding* (what does this document mean,
 which page does it touch, what should the summary say) is a model call. This is what makes the system testable, reproducible, and cheap: the same folder
-state yields the same gather and the same writes; only one stage is a fresh sample from a model.
+state yields the same gather and the same writes; only one stage is a fresh sample from a model. A
+**class policy** is part of the gather contract: which files are hashed in full, which are counted
+only, which are never presented to a model; without it a library of photographs or imaging costs a
+full walk every tick, or is silently skipped, which is worse.
 
 ## The gate before the model
 
@@ -326,4 +338,5 @@ A folder that maintains itself: drop a document in, and within one gate interval
 change nothing and nothing runs. The conventions live in one public home (the skills); the design
 lives here; a deployment is just an instance that supplies a timer, storage, and a model runner and
 follows this shape. Onboard a new folder by stamping the file-ingest archetype — see
-`plugins/ai-os/skills/project-onboarding`.
+`plugins/ai-os/skills/project-onboarding`. A lived-in folder is adopted through `folder-curation`
+first: audited, tidied only as far as its owner chose, then onboarded.
