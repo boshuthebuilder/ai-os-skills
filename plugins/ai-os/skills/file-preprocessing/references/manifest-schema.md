@@ -1,4 +1,4 @@
-# family-ai-preprocess-manifest/1 — the manifest schema
+# family-ai-preprocess-manifest — the manifest schema (/1 and /2)
 
 `manifest.json` at the staging-folder root. Top level:
 
@@ -14,6 +14,12 @@
 `entries` is keyed by the file's **SHA-256 content hash** — the entry's stable id. Identity follows
 the bytes, not the name: renames and moves update `current_path`, never the key. An unknown
 `schema` value must be treated as a foreign file (fail loud), never silently rewritten.
+
+`/2` is a strict superset of `/1`: every `/1` field keeps its meaning; the fields below are added.
+A `/1` consumer reading a `/2` file must ignore the fields it does not know; a `/2` consumer reading
+a `/1` file treats every added field as absent. The schema string is
+`family-ai-preprocess-manifest/2`. Producers: `file-preprocessing` (either), `folder-curation`
+(always `/2`).
 
 ## Entry fields
 
@@ -46,6 +52,22 @@ the bytes, not the name: renames and moves update `current_path`, never the key.
 | `processed_at` | string | ISO datetime of the last understanding pass |
 | `departed_at` | string, optional | present only while `departed` is flagged |
 
+### Added in /2
+
+| field | type | meaning |
+|---|---|---|
+| `class` | string | the type class from the class policy: `document`, `image`, `imaging`, `software`, `iwork`, `email`, `archive`, `other` |
+| `size` | int | bytes at last scan |
+| `mtime` | string | ISO datetime of the file's last modification at last scan |
+| `hashed` | bool | `false` for count-only classes (the key is then derived from `size:mtime:path` and marked `synthetic_id: true`); such an entry is never a duplicate candidate |
+| `synthetic_id` | bool, optional | present and `true` when `hashed` is `false` |
+| `dup_group` | string, optional | id of the duplicate group this entry belongs to (the group id is the shared content hash) |
+| `dup_kind` | string, optional | `redundant`, `working_copy`, or `pack`; absent when the entry is the canonical copy or has no duplicates |
+| `reference_copy_of` | string, optional | on a pack member: the canonical entry's id |
+| `overlap` | string, optional | the overlap pair id this file's folder participates in (the audit's *Overlapping homes*) |
+| `generic_name` | bool, optional | the stem is a device or scanner default |
+| `plan_ref` | string, optional | `plans/<date>/move-plan.csv#<seq>` of the last approved row that touched this entry |
+
 ## Flags
 
 `low_confidence` (extraction was weak) · `unreadable` (no extractable text; filed to
@@ -67,6 +89,10 @@ document's entry id is still the merged file's own SHA-256 (the hash contract is
 — necessary because PDF writers embed creation metadata, so the same halves never merge to
 identical bytes twice.
 
+**Added in /2:** `redundant` · `working_copy` · `pack_member` · `root_stray` · `unconverted` (an
+`iwork` or other proprietary file with no converted sibling yet) · `hygiene` (a name defect; the
+defect kind goes in `look_reason`). Same rule as before: consumers ignore flags they don't know.
+
 ## Consumer rules
 
 - Match files to entries by hash first, path second. A file whose hash is absent from `entries` has
@@ -75,3 +101,55 @@ identical bytes twice.
 - When writing, preserve identity fields you didn't re-derive (`first_seen`, `rename_history`,
   `original_name`), write atomically, and bump `generated_at`.
 - `AUDIT.md` is derived; regenerate it from the manifest rather than editing it.
+
+## Shared contracts
+
+Two pieces of machinery every producer of this manifest runs: the walk that keeps it true, and the
+guards every move it records passes through. They live here, beside the schema they operate on, so
+`file-preprocessing` and `folder-curation` cite one home rather than each carrying a copy that
+drifts. A skill *describes* these; a deployment's code is what holds them.
+
+### The scan contract
+
+Walk the whole folder and reckon the manifest to what is on disk:
+
+- **Hash every file (SHA-256)** — the entry's id, so identity follows the bytes, not the name.
+- **A class policy decides what is hashed.** Which files are hashed in full, which are **count-only**,
+  and which are never presented to a model at all is a per-folder policy, not a fixed rule — a
+  library that is mostly photographs or medical imaging must not cost a full hash walk every pass. A
+  count-only entry carries `hashed: false` (with `synthetic_id: true`) and **is never a duplicate
+  candidate**; it is still *counted*, per folder, every pass, so a folder that doubles overnight is
+  visible.
+- **Confirm each entry's file is still at its recorded path.**
+- **Adopt human moves** — the same hash at a new path updates the entry's placement; the human won
+  that argument, and nothing is moved back.
+- **Spot edited files** (a known path with a new hash) and **strays** (a path and hash the manifest
+  has never seen).
+- **Flag departed entries** — an entry whose file is no longer anywhere in the folder gains
+  `departed` with a last-seen stamp. Entries are **never deleted**; the history is the point, and a
+  departed file's return sheds the flag.
+- **Bytes that are not local are a named state, not a skip.** A cloud placeholder cannot be hashed:
+  report it as `placeholder` and let the caller decide what that means for the pass (a run that must
+  act on it refuses to start; a read-only audit records it and carries on). Never treat an
+  unhashable file as absent, and never guess its content.
+
+The walk is a **pure function of folder state**: the same folder yields the same manifest, which is
+what lets a later pass diff against it and call the difference drift.
+
+### The move guards
+
+Every move, rename, or deletion this manifest records passes all of these, and none of them is a
+judgement call:
+
+- **Containment.** Source and target must both stay inside the folder — refuse `..`, absolute paths,
+  and any symlinked path component. A path read out of a file is untrusted, even one you wrote.
+- **Create destination folders only when a move actually needs them.**
+- **Hash-verify after the move.** The moved bytes' hash must equal the entry id; a mismatch is a loud
+  error, never a silent success.
+- **A two-phase op log**, where the environment supports it: intent → committed, fsync'd inside the
+  folder (e.g. `.familyai/preprocess-log.jsonl`), replayed on the next pass so an interrupted move is
+  resolved **by content**, and a committed move the manifest never learnt about is repaired from the
+  log.
+- **An undo entry per executed move, appended *before* the move is attempted**, and sufficient to
+  reverse it by content: an entry written only after a successful move cannot describe the move that
+  failed halfway, which is the one a person needs to reverse.
