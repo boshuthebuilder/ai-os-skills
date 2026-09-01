@@ -17,7 +17,7 @@
       "name": "ai-os",
       "displayName": "Headless AI OS",
       "source": "./plugins/ai-os",
-      "description": "Framework + Agent Skills for a headless AI assisting system over real folders: project-onboarding, wiki-onboarding, wiki-maintenance, user-onboarding, file-preprocessing."
+      "description": "Framework + Agent Skills for a headless AI assisting system over real folders: project-onboarding, wiki-onboarding, wiki-maintenance, user-onboarding, folder-curation, file-preprocessing."
     },
     {
       "name": "productivity",
