@@ -13,7 +13,7 @@ reordered; a withdrawn proposal is a row with `approved = declined`.
 | `action` | proposer | `move`, `rename`, `delete`, `convert`, `create` |
 | `from` | proposer | folder-relative path today (empty for `create`) |
 | `to` | proposer | folder-relative path after (empty for `delete`) |
-| `evidence` | proposer | the sha256 id of the file, or of the folder's manifest listing for a folder rename; the hash of the canonical copy for a `delete` |
+| `evidence` | proposer | the sha256 id of the file, or of the folder's manifest listing for a folder rename; for a `delete`, the id of the entry whose `copies` list holds the path in `from` |
 | `reason` | proposer | one sentence, the audit finding it resolves (e.g. `redundant copy of <id> in the same folder`) |
 | `kind` | proposer | for `delete`: `redundant` only (a `working_copy` or `pack` row is never a delete); for `convert`: the target format |
 | `sweep` | proposer | for a folder `rename`: `yes` when the wiki-maintenance rename protocol must run; the consumers found are listed in the execution `note` |
@@ -24,8 +24,9 @@ reordered; a withdrawn proposal is a row with `approved = declined`.
 | `executed_at` | executor | ISO datetime |
 | `note` | executor | the failure reason, the undo entry's id, or the rename sweep's consumer list |
 
-Rules the schema encodes: a `delete` row's `evidence` must equal an existing entry's id whose
-`dup_kind` is `redundant`; a `convert` row is `done` only after verification and archiving of the
-original; a folder `rename` with `sweep = yes` is `done` only after every in-folder consumer of the
+Rules the schema encodes: a `delete` row's `from` must be a path its entry's `copies` list marks
+`redundant`, and `evidence` must be that entry's own id — the canonical path is never deleted, and a
+row that would remove an entry's last live path is invalid; a `convert` row is `done` only after
+verification and archiving of the original; a folder `rename` with `sweep = yes` is `done` only after every in-folder consumer of the
 old path is rewritten and out-of-folder consumers are logged as watch items. The executor reads only
 this file, never the audit.

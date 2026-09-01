@@ -19,9 +19,9 @@ Per entry, on top of the scan contract's own fields:
 
 - **A type class** from the project's class policy (`classes:` in `jobs.yaml`), which decides whether
   the entry is hashed in full or counted only.
-- **Duplicate groups** by content hash across the whole tree, each member tagged `dup_kind`:
-  `redundant`, `working_copy`, or `pack`. A count-only entry is never a duplicate candidate. A pack
-  member carries `reference_copy_of` the canonical id.
+- **Duplicate groups** by content hash across the whole tree. Copies of the same bytes share one
+  entry, so a group is one entry whose `copies` list holds every live path, each tagged `canonical`,
+  `redundant`, `working_copy` or `pack`. A count-only entry is never a duplicate candidate.
 - **Overlapping homes** — one subject with more than one folder its documents land in, detected by
   name and by duplicate groups spanning two trees. Recorded as a pair id on every participating
   entry (`overlap`), with the file count on each side.

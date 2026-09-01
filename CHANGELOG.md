@@ -23,10 +23,13 @@ ambiguity into the Schema; preprocessing it runs a conveyor over files the owner
 - **New archetype `folder-curation`**: a periodic `audit` that sits entirely below the determinism
   boundary, and an on-demand, propose-only `curate`. First archetype whose job may touch the owner's
   material, and only by proposing.
-- **Manifest schema `/2`** (strict superset): `class`, `size`, `mtime`, `hashed`, `dup_group`,
-  `dup_kind`, `reference_copy_of`, `overlap`, `generic_name`, `plan_ref`; flags `redundant`,
-  `working_copy`, `pack_member`, `root_stray`, `unconverted`, `hygiene`. The scan contract and the
-  move guards move into the reference as the single home both skills cite.
+- **Manifest schema `/2`** (strict superset): `class`, `size`, `mtime`, `hashed`, `copies`,
+  `overlap`, `generic_name`, `plan_ref`; flags `root_stray`, `unconverted`, `hygiene`. Duplicates
+  keep the `/1` rule that a copy mints no entry of its own — copies of the same bytes share one
+  hash, so a duplicate group *is* an entry, and `copies` carries its several live paths with the
+  kind (`canonical`, `redundant`, `working_copy`, `pack`) that decides what may be done to each.
+  The scan contract and the move guards move into the reference as the single home both skills
+  cite.
 - **`file-preprocessing` gains an in-place mode**: understand and rename listed files where they
   are, for curation's medium depth.
 - **`project-onboarding`** gains the pre-onboarding branch (assess, curate if needed);

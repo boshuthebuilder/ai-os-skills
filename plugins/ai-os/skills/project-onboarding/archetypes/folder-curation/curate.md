@@ -37,7 +37,8 @@ only. Follow the skill's *Propose* rules, of which these decide most rows:
    round — list it under `later_rounds` instead, so the owner can choose that depth deliberately.
 2. **Delete only redundant duplicates**, proven by hash and outside any pack. A `working_copy` is
    consolidated to its canonical home with a pointer note; a `pack` member is a submission record and
-   stays whole. A `delete` row's `evidence` is the hash of the **canonical copy that survives**.
+   stays whole. A `delete` row names the redundant **path** in `from` and that path's entry id in
+   `evidence`; the canonical path survives and is never deleted.
 3. **AI artefacts beside the sources** — summaries, dashboards, session instruction files — move to
    the wiki or outputs tier the rulebook declares. Sources stay pure.
 4. **Content-based renames are delegated**, not re-derived here: a `rename` row at medium depth names

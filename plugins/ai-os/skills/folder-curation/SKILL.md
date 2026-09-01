@@ -86,14 +86,16 @@ moves, spot edited files and strays, flag departed entries), then compute what a
 
 - **A type class per file**, from the class policy below. Classes decide what is hashed in full,
   what is counted only, and what the later ingest may read.
-- **Duplicate groups** by content hash, across the whole tree, each tagged by kind:
+- **Duplicate groups** by content hash, across the whole tree. Copies of the same bytes share one
+  manifest entry (the key *is* the hash), so a group is one entry with several `copies`, each path
+  tagged by kind:
   - *redundant*: the same bytes filed twice by accident (`x.pdf` and `x (1).pdf`; a parallel
     tree built by copying);
   - *working copy*: a folder assembled by copying sources from their canonical home (a tax-year
     folder that copies bank statements in);
   - *pack*: a folder the owner declared, or the audit recognises by shape, as a **submission
     record** (an application pack that copies identity documents). Copies inside a pack are
-    reference copies, never redundancy; the entry records `reference_copy_of` the canonical id.
+    reference copies, never redundancy.
   Only *redundant* copies are ever candidates for deletion, and only after approval.
 - **Overlapping homes**: one subject with more than one folder where its documents land (the same
   property under a transactions folder and an operations folder; identity documents under a person
@@ -145,7 +147,8 @@ From the audit and the answers, emit a **move-plan** (schema:
   owner can approve a domain at a time.
 - **Never exceed the chosen depth.** Rows above it may be listed under a *later* heading for the
   next round, never mixed into this one.
-- **Delete only redundant duplicates** proven by hash and outside any pack. Working copies are
+- **Delete only redundant duplicates** proven by hash and outside any pack — a row names the
+  redundant *path*, never the entry, so the canonical path always survives. Working copies are
   consolidated to their canonical home with a pointer note, never silently removed.
 - **AI artefacts beside sources** (summaries, dashboards, session instruction files) move to the
   wiki or outputs tier the deployment declares; sources stay pure.

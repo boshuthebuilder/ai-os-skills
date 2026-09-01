@@ -61,12 +61,18 @@ a `/1` file treats every added field as absent. The schema string is
 | `mtime` | string | ISO datetime of the file's last modification at last scan |
 | `hashed` | bool | `false` for count-only classes (the key is then derived from `size:mtime:path` and marked `synthetic_id: true`); such an entry is never a duplicate candidate |
 | `synthetic_id` | bool, optional | present and `true` when `hashed` is `false` |
-| `dup_group` | string, optional | id of the duplicate group this entry belongs to (the group id is the shared content hash) |
-| `dup_kind` | string, optional | `redundant`, `working_copy`, or `pack`; absent when the entry is the canonical copy or has no duplicates |
-| `reference_copy_of` | string, optional | on a pack member: the canonical entry's id |
+| `copies` | list, optional | every live path holding these bytes: `{path, kind}`, `kind` being `canonical`, `redundant`, `working_copy` or `pack`. Present only when the entry has more than one path; exactly one is `canonical` |
 | `overlap` | string, optional | the overlap pair id this file's folder participates in (the audit's *Overlapping homes*) |
 | `generic_name` | bool, optional | the stem is a device or scanner default |
 | `plan_ref` | string, optional | `plans/<date>/move-plan.csv#<seq>` of the last approved row that touched this entry |
+
+**Duplicates do not mint entries.** Copies of the same bytes share one hash, so they share one key
+and one entry — the `/1` rule that a copy gets no entry of its own, unchanged. A duplicate group
+therefore *is* an entry, and needs no group id of its own. What `/2` adds is `copies`: the several
+live paths that one entry has, each with the kind that decides what may be done to it. `redundant`
+is the only kind a deletion may name; a `working_copy` is consolidated to the canonical path with a
+pointer note; a `pack` copy is a submission record and stays whole. A count-only entry (`hashed:
+false`) is never a duplicate candidate and never carries `copies`.
 
 ## Flags
 
@@ -89,9 +95,11 @@ document's entry id is still the merged file's own SHA-256 (the hash contract is
 — necessary because PDF writers embed creation metadata, so the same halves never merge to
 identical bytes twice.
 
-**Added in /2:** `redundant` · `working_copy` · `pack_member` · `root_stray` · `unconverted` (an
-`iwork` or other proprietary file with no converted sibling yet) · `hygiene` (a name defect; the
-defect kind goes in `look_reason`). Same rule as before: consumers ignore flags they don't know.
+**Added in /2:** `root_stray` · `unconverted` (an `iwork` or other proprietary file with no
+converted sibling yet) · `hygiene` (a name defect; the defect kind goes in `look_reason`). Same rule
+as before: consumers ignore flags they don't know. All three describe the entry's path — on an entry
+that has a `copies` list they describe its canonical one; the other copies are described by their
+own `kind`, not by a flag.
 
 ## Consumer rules
 
