@@ -35,7 +35,9 @@ If a Schema/Index already exists, don't re-onboard — switch to **wiki-maintena
 List the folder's top-level structure — the folders and notable files the owner already keeps. **Never
 move or reorganise anything**; you are reading how they think, not imposing a system. Note the natural
 domains (e.g. a person has folders like Finance, Property, Health, Travel; a business has Customers,
-Contracts, Invoices). The owner's own top-level folders are your draft domain map.
+Contracts, Invoices). The owner's own top-level folders are your draft domain map. If the scan shows
+overlapping homes, duplicate trees or root strays, the folder needs **folder-curation** before a
+Schema can route it; propose that first.
 
 ### 2. Propose a structure
 
@@ -62,6 +64,12 @@ and names to the material, and record whatever you choose in the Schema (step 4)
 structure beats an elaborate one the material doesn't justify; only create a domain the owner actually
 has files for.
 
+**Time folders and topic folders.** Owners keep two shapes side by side: time-based folders (school
+years, tax years, policy years) and topic folders that span years (a hobby, an adviser, an exam).
+Documents get filed under both and duplicated across them. Mirror both in the wiki, but write the
+routing rule down: dated documents route to the time folder; a topic folder is the home only for
+matters that span several years. Record the rule in the Schema so every later pass files the same way.
+
 ### 3. Interview — a few targeted questions
 
 Confirm the proposal and fill the gaps with **3–5 questions**, not a questionnaire. Aim for:
@@ -73,6 +81,16 @@ Confirm the proposal and fill the gaps with **3–5 questions**, not a questionn
 - **Per domain, what triggers an update?** Which kind of incoming document touches which page — this
   becomes the Schema's routing table.
 - **Cadence & conventions** — how often it's maintained, and any existing naming/structure to honour.
+
+Four more the scan cannot guess, so they replace guesses rather than lengthening the questionnaire:
+
+- **How do new files arrive today?** A scanner to the root, attachments saved into subfolders,
+  batches from a desktop — this decides where the inbox goes.
+- **Which folders are closed matters?** Ingested once as history and marked superseded, rather than
+  watched for change.
+- **Which formats are working formats**, and will they be converted?
+- **Does anyone else write to the folder, and where have AI outputs already been written?** Those
+  move to the wiki tier — see `wiki-maintenance`.
 
 Propose, take their answers, and only then write. Never write the skeleton without the owner's nod.
 
@@ -91,7 +109,9 @@ Create the meta pages and the agreed domain pages:
   list, and an "open questions" list for known gaps.
 - **Log** — append-only, one dated line per pass.
 - **Domain pages** — an overview note per domain; leave detail pages to be filled as sources arrive
-  (don't pre-invent empty pages).
+  (don't pre-invent empty pages). A People domain carries an **alias table**: every name, script and
+  nickname a person appears under, so routing recognises the same person across languages and
+  documents. Record it as a Schema field the trigger table consults.
 
 Mark system-written pages so a maintenance pass knows it owns them (and a human edit is respected — see
 wiki-maintenance's human-edit guard). Add provenance/freshness frontmatter to each page (`provenance`,

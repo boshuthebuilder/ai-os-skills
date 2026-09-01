@@ -53,10 +53,10 @@ that agent's skills path.
 
 ## The `coding` direction
 
-Four skills for the development process itself, in any repo executed by coding agents. One theme
+Six skills for the development process itself, in any repo executed by coding agents. One theme
 runs through them: move judgment upstream into artifacts, so cheaper agents become safe to use.
 They span the lifecycle — **plan** (tier the work), **build** (lock the design, discipline the
-change), **gate** (review the change):
+change, iterate to acceptance), **gate** (review the change), **verify** (prove the control ran):
 
 - **`agent-tiered-planning`** — label every issue with an `agent:standard|senior|frontier`
   capability tier orthogonal to its effort estimate; publish a playbook cold agents read before
@@ -78,6 +78,14 @@ change), **gate** (review the change):
   hunks), and the task restated as verifiable success criteria with a step-then-verify plan. The
   authoring-side counterpart of the review gate's scope-and-shape lens; binds every tier, and
   matters most where supervision is thinnest.
+- **`iterative-acceptance`** — how to build on a nondeterministic tool (an LLM, OCR, a vision
+  model) when the expectations cannot be specified up front and only surface on contact with real
+  output. Iterate real runs against a **frozen baseline** whose byte-identity is checked around
+  every experiment, with predictions **registered before** each run and scored honestly after it;
+  park all state so context comes only from the operator's prompt (the blank-slate protocol); turn
+  every miss into a systematic capability rather than a hack for the test data; and keep batch
+  knowledge in the prompt channel while fixes live in code. For any pipeline whose core step is a
+  model call — document processing, extraction, classification, synthesis.
 - **`silent-failure-design`** — design and audit controls so that one which never ran is
   distinguishable from one that ran and passed. The failure class where absence wears the appearance
   of success: CI never scheduled, a watchdog whose exception is swallowed, a guard that cannot start
@@ -105,18 +113,20 @@ once, return a structured result that deterministic guards turn into changes), t
 of a job (prompt template · skill · deterministic guards), the determinism boundary, the gate
 that runs a cheap deterministic check before any model call, and reactive vs periodic scheduling.
 Each job family is an **archetype** with its own write contract — knowledge synthesis is the
-first, but folder hygiene, drafting, or any other family flows through the same layers and the
-same gate. The reference deployment is
+first, and **folder hygiene** is now the fourth (a deterministic audit plus a propose-only curate);
+drafting, or any other family, flows through the same layers and the same gate. The reference
+deployment is
 [`family-ai-os`](https://github.com/boshuthebuilder/family-ai-os), which consumes this repo as a
 pinned dependency.
 
 The first archetype implements the **in-folder knowledge wiki**: a synthesised, always-current
-layer over a folder of real files. Four skills cover the lifecycle:
+layer over a folder of real files. Five skills cover the lifecycle:
 
 - **`project-onboarding`** — stand up a self-maintaining folder end to end: create its wiki (via
   `wiki-onboarding`) and wire the two standard maintenance jobs — a reactive `ingest` pass and a
   periodic `reconcile` pass — from the **file-ingest archetype**. The whole-project flow; composes
-  the two skills below. Also home to the job archetypes (file-ingest, user-synthesis, code).
+  the two skills below. Also home to the job archetypes (file-ingest, user-synthesis, code,
+  folder-curation).
 - **`user-onboarding`** — onboard a *person* (an identity) rather than a folder: the
   storage-ownership handshake (the user owns the folder and shares it into the worker), the
   **type-1 user vault** ("second brain") skeleton, and stamping the **user-synthesis archetype**
@@ -132,6 +142,13 @@ layer over a folder of real files. Four skills cover the lifecycle:
   wiki's own Schema page is the authority for its exact pages and layout. Includes the provenance
   model, the never-overwrite-a-human-edit guard, and a sensitive-data rule (identifiers as last-4
   only).
+- **`folder-curation`** — adopt a **lived-in** folder, the one between a drop folder and a tidy
+  one. The audit half is deterministic and repeatable: a hash-keyed manifest over the whole library
+  with type classes, duplicate groups that know a submission pack from a redundant copy,
+  overlapping homes, and drift since the last pass. The curate half is **propose-only** — an
+  interview on a fixed depth ladder, then a move-plan the owner approves row by row, executed under
+  the shared move guards and proved by a re-audit. Hands off to `project-onboarding` when the verify
+  step is clean, and the audit keeps running afterwards as the project's periodic `audit` job.
 
 ### Using it in a Cowork session
 

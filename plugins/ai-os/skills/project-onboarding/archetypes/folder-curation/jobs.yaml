@@ -1,0 +1,41 @@
+# folder-curation archetype — a deterministic periodic audit plus a propose-only curate job.
+# Copy into a project's job config. A job's `id` equals its `mode`. Field names beyond
+# id/mode/prompt are deployment-specific — adapt to your config schema.
+
+jobs:
+  - id: audit
+    mode: audit
+    schedule: weekly                # also run on demand: before a curation round (baseline) and after it (verify)
+    execution_mode: deterministic   # NO model call: a hashing walk under the scan contract + a pure render
+    # prompt: (none)                # audit.md specifies the pass; there is no template to fill
+    # timeout_seconds: 900          # a large library is a long walk; count-only classes keep it bounded
+
+  - id: curate
+    mode: curate
+    prompt: curate.md               # one model call over the latest audit → a move-plan proposal
+    schedule: on_demand             # or `monthly` once a project is live, to surface the next depth
+    execution_mode: single_shot
+    # max_budget_usd: 1.00          # a whole-audit prompt; budget above measured spend
+    # compatible_models: [...]
+
+# The write contract of this archetype: `audit` writes ONLY under `_Audit/` (manifest, AUDIT.md);
+# `curate` writes ONLY a move-plan under `_Audit/plans/<date>/`. Neither writes the wiki or moves a
+# file. Execution of an approved plan is a separate, owner-triggered act under the move guards.
+capabilities:
+  skills: [folder-curation]
+
+# Class policy — the deterministic gate applies it; the audit reports per class. Defaults from the
+# folder-curation skill; override per project here.
+classes:
+  document: {hash: full, ingest: read}
+  image:    {hash: full, size_cap_mb: 25, ingest: scans_only}
+  imaging:  {hash: count_only, ingest: never}
+  software: {hash: count_only, ingest: never}
+  iwork:    {hash: full, ingest: after_convert}
+  email:    {hash: full, ingest: read}
+  archive:  {hash: full, ingest: on_request}
+
+# Deterministic exclude list — paths the gate never presents to a model, whatever the class.
+# (The folder-curation interview's sensitivity answers land here.)
+exclude:
+  - "**/*login details*"

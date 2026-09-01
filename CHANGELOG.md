@@ -4,6 +4,49 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v6.5.0 — 2026-09-01
+
+A **MINOR** for `ai-os`: a new skill and archetype for the folder that sits between
+`file-preprocessing` and `project-onboarding`, the lived-in one.
+
+The onboarding flow went from "scan read-only" straight to "write the wiki", under a rule that the
+owner's files are never reorganised. Adopting a real folder showed the gap: overlapping homes for
+one subject, duplicate trees built by copying, strays at the root, AI outputs left beside the
+documents they described, and formats the system cannot read. Onboarding that as-is writes the
+ambiguity into the Schema; preprocessing it runs a conveyor over files the owner already filed.
+
+- **New skill `folder-curation`**: audit (deterministic, repeatable, a hash-keyed manifest over the
+  whole library with type classes, duplicate kinds, overlapping homes and drift) then curate
+  (interview on a fixed ladder, a move-plan the owner approves row by row, execution under the
+  shared move guards, verify by re-audit). Propose-only by default; a depth ladder
+  (light / medium / full) the owner chooses and the plan never exceeds.
+- **New archetype `folder-curation`**: a periodic `audit` that sits entirely below the determinism
+  boundary, and an on-demand, propose-only `curate`. First archetype whose job may touch the owner's
+  material, and only by proposing.
+- **Manifest schema `/2`** (strict superset): `class`, `size`, `mtime`, `hashed`, `copies`,
+  `overlap`, `generic_name`, `plan_ref`; flags `root_stray`, `unconverted`, `hygiene`. Duplicates
+  keep the `/1` rule that a copy mints no entry of its own — copies of the same bytes share one
+  hash, so a duplicate group *is* an entry, and `copies` carries its several live paths with the
+  kind (`canonical`, `redundant`, `working_copy`, `pack`) that decides what may be done to each.
+  The scan contract and the move guards move into the reference as the single home both skills
+  cite.
+- **`file-preprocessing` gains an in-place mode**: understand and rename listed files where they
+  are, for curation's medium depth.
+- **`project-onboarding`** gains the pre-onboarding branch (assess, curate if needed);
+  **`wiki-onboarding`** gains four interview questions, the time-vs-topic routing rule and the
+  People alias table; **`wiki-maintenance`** gains the outputs-placement rule (AI artefacts land in
+  the wiki, never beside sources), sensitivity depth per domain, and the class policy in the gate.
+
+No skill was renamed or removed; no placeholder became required (`curate.md` uses only the required
+core). `manifest-schema.md` keeps its path; `/1` files remain valid.
+
+Two documentation fixes ride along, unrelated to `folder-curation` and changing no contract. The
+`coding` direction's README section claimed "Four skills" above five bullets, and
+`iterative-acceptance` — shipped in v4.2.0 — had no bullet at all and was named in neither
+`plugins/coding/.claude-plugin/plugin.json` nor `.claude-plugin/marketplace.json`; all three now
+list the six skills that are actually there. And the `file-preprocessing` naming example now uses
+an invented party name, per this repo's own generic-always rule.
+
 ## v6.4.0 — 2026-09-01
 
 A **MINOR** for `productivity`'s `portable-markdown` skill: the vault-boundary section stops

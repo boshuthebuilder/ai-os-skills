@@ -31,9 +31,15 @@ whatever your setup declares:
 - the **wiki** — the synthesised layer this skill maintains.
 - an **inbox / drop folder** (e.g. `_Inbox/`) — where new items land to be filed and ingested.
 - optionally a **config / rulebook** for the folder, and an **outbox** for drafts awaiting review.
+- optionally an **audit pair** (`_Audit/manifest.json` + `AUDIT.md`) maintained by the
+  folder-curation archetype's `audit` job.
 
 Everything else at the root is the owner's source material. The ingest boundary is an exclusion: read
 everything except the system-owned names.
+
+**Anything an AI writes lands in the wiki or an outputs tier, never beside the sources.** A summary, a
+dashboard or a session instruction file left next to the documents it describes is a stray; an ingest
+that finds one files it into the wiki and logs the move.
 
 ## The recommended layout (an example — the Schema is the law)
 
@@ -190,7 +196,9 @@ and `reconcile`):
 **A deterministic gate runs before either spends model effort.** A cheap check of folder state — new or
 changed sources, items in the inbox, a changed calendar snapshot — decides whether there is anything to
 do, so an unchanged folder costs nothing. This is what lets `ingest` run reactively on a frequent tick:
-it no-ops for free until something actually moves, and only a real change reaches the model.
+it no-ops for free until something actually moves, and only a real change reaches the model. The gate
+applies the project's **class policy** (`folder-curation`): count-only classes cost a count, not a
+hash walk, so a folder that is mostly photographs or imaging stays cheap to keep.
 
 A low-volume folder is well served by a frequent reactive ingest and an occasional reconcile; scale to
 the folder's traffic. **Who maintains it matters:** when a person (or an interactive session) edits the
@@ -233,6 +241,13 @@ with no inline maintainer, the scheduled passes are the primary path.
   owner may override this: an explicit, dated decision recorded in the Schema (or the wiki's
   data-sensitivity page) is respected by every sweep from then on. A decided exception stops alerting;
   it never becomes a permanently re-raised flag.
+- **Sensitivity has a depth as well as a mask.** The Schema may set a per-domain depth: `full`
+  (default), `administration-only` (a legal matter: adviser, dates, invoices, next deadline, never
+  the substance of advice), `dates-only` (health: appointments and "a report exists at <path>"). A
+  deterministic exclude list (paths and globs the gather never presents) handles credentials and
+  anything the owner names; both are recorded decisions and are never re-raised. Identifiers leak
+  through filenames as well as bodies: a filename carrying a full account or document number is a
+  finding for the next curation round, and the wiki never repeats it.
 - **Deadlines are derived, not authored.** Record the date on the page that owns it; build the Deadlines
   list from those, and keep it distinct from any calendar feed. **An empty roll-up must say why:** zero
   rows found while derived pages exist is a likely keying fault, rendered as a loud banner on the

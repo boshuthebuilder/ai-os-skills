@@ -10,7 +10,8 @@ description: >-
   lets any conforming agent (an automated engine, a Claude Code session, any other AI with file
   access) continue another's work on the same folder. Use when handed a drop folder of accumulated
   files to triage before they join any project; the audit is the durable artefact that makes a later
-  onboarding — by any system — cheap.
+  onboarding — by any system — cheap. Also callable in-place by folder-curation to rename
+  already-filed files without moving them.
 ---
 
 # file-preprocessing
@@ -165,16 +166,17 @@ failed". Two consequences:
 
 Work through these steps; every step except **Understand** is deterministic.
 
-1. **Scan.** Hash every file (SHA-256). In `Runs/`: confirm each manifest entry's file is still at
-   its recorded path; adopt human moves (same hash at a new path → update the entry's placement —
-   the human won that argument); spot edited files (known path, new hash) and strays (unknown path
-   and hash). In `Incoming/`: a hash already live in the tree is a **duplicate** — leave it and
-   note it; a hash whose entry is flagged `departed` is a **return** — reuse its
-   recorded classification and filename with no model call, but place it into the CURRENT run's
-   parcel, never back into the departed parcel its history names (that parcel has been carried
-   off; recreating it would break the one-self-contained-parcel-per-run promise); the rest are
-   candidates. Refuse to start while any dropped
-   file is still a cloud placeholder — a partial run splits one logical drop across two parcels.
+1. **Scan.** Walk the whole folder as the manifest reference's **scan contract** defines it (hash
+   every file; confirm each entry is still at its recorded path; adopt human moves; spot edited
+   files and strays; flag departed entries) — that is the part every producer of this manifest
+   shares. What the conveyor adds is the drop folder's own semantics: in `Incoming/`, a hash already
+   live in the tree is a **duplicate** — leave it and note it; a hash whose entry is flagged
+   `departed` is a **return** — reuse its recorded classification and filename with no model call,
+   but place it into the CURRENT run's parcel, never back into the departed parcel its history
+   names (that parcel has been carried off; recreating it would break the
+   one-self-contained-parcel-per-run promise); the rest are candidates. And a placeholder is a
+   refusal here, not a note: **refuse to start** while any dropped file is still a cloud
+   placeholder — a partial run splits one logical drop across two parcels.
 2. **Read — no arbitrary caps, a tiered ladder instead.** Extract text however the environment
    allows (a text read, OCR for scans/images, speech transcription for audio). Never truncate a
    long document and report it as whole: probe cheaply first (page count, text-layer presence) and
@@ -279,26 +281,25 @@ Work through these steps; every step except **Understand** is deterministic.
    failed reduce leaves the groups' own judgements standing.
 8. **Name and place — deterministically, from the fields.** Filename pattern:
    `<Party> - <DocType> <YYYY-MM-DD> <Detail>.<ext>` (e.g.
-   `Jiayu - Lab Report 2026-03-14 CA125.pdf`). Fallbacks are fixed: unknown party → `Unknown`; no
+   `Wren - Lab Report 2026-03-14 Vitamin D.pdf`). Fallbacks are fixed: unknown party → `Unknown`; no
    trustworthy date → the date segment is omitted, never fabricated; empty detail → omitted. Keep
    the extension, lowercased. Sanitise every segment (NFC-normalise; strip path separators,
    control characters, trailing dots/spaces; cap length in UTF-8 bytes — filesystem limits are
    byte limits). On a name collision append ` (2)`, ` (3)`… — never overwrite, never skip.
-9. **Move under guards.** Source and target must both stay inside the folder (refuse `..`,
-   absolute paths, and any symlinked path component). Create category/reason folders only when
-   needed. After the move, verify the moved bytes' hash equals the entry id; a mismatch is a loud
-   error, never a silent success. If the environment supports it, write a two-phase op log
-   (intent → committed) fsync'd inside the folder (e.g. `.familyai/preprocess-log.jsonl`) and
-   replay it on the next run so an interrupted move is resolved by content, and a committed move
-   the manifest never learnt about is repaired from the log.
+9. **Move under guards** — the **move guards** the manifest reference defines, unchanged: in-folder
+   containment and symlink refusal, destination folders created only when a move needs them, a
+   hash-verify against the entry id after the move, a two-phase op log replayed on the next run so
+   an interrupted move is resolved by content, and an undo entry appended before each move is
+   attempted. The category and reason folders are this skill's destinations; the guards they are
+   reached through are every producer's.
 10. **Record.** Merge each entry into `manifest.json` (atomic write). A re-understood file keeps its
    identity fields (first seen, name history, placement) and refreshes the descriptive ones. An
    edited file is a new entry (new hash) understood **in place** — do not rename or move a file the
    human has already accepted under its name; the old entry departs.
-11. **Reconcile presence — against a full walk, never a limited subset.** Entries whose file is no
-   longer anywhere in the folder gain the `departed` flag with a last-seen stamp; entries are
-   **never deleted** — the audit's history is the point. Under the conveyor model a whole run
-   folder leaving is normal; its entries simply depart. A departed file's return sheds the flag.
+11. **Reconcile presence — against a full walk, never a limited subset.** The scan contract's
+   departed-entry rule (flag, never delete — the audit's history is the point), read through the
+   conveyor: a whole run folder leaving is normal, so its entries simply depart rather than
+   reading as loss, and a departed file's return sheds the flag.
 12. **Render the views** from the manifest: `AUDIT.md` (self-describing header, sections by
    category, connections rendered to current filenames, "Needs a look" with each file's reason,
    "No longer present"), the run folder's manifest+audit slice, and `NEEDS A LOOK.md` when — and
@@ -316,6 +317,15 @@ bound must be **split-scan aware** or it starves: a waiting half must not consum
 the boundary — would never be admitted, deadlocking the queue), and a selected half pulls its
 twin into the same batch even from beyond the boundary, so a pair always travels together (the
 bound is a cost cap, not an exact count).
+
+**In-place mode.** A caller (today `folder-curation`, at medium depth) may hand this skill a **list
+of files that already live in their folders** and ask for understanding and renaming **without moving
+them**: the file is understood exactly as a candidate would be, named by the same pattern, and
+renamed in place; no run parcel is created, no category folder is minted, and the manifest entry
+records the rename in `rename_history` with the caller's plan reference in `plan_ref`. Split-scan
+merging and bundle splitting still apply (the merged or split output lands beside the original), and
+the original rests in the caller's archive area rather than a run's `_Archive/`. In-place mode never
+touches a file outside the list it was given.
 
 The reference implementation is family-ai-os's `preprocess` engine (dashboard-triggered, chunked
 LLM calls under a context budget with parallel chunk reads and strictly ordered applies, on-device
