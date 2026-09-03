@@ -94,7 +94,8 @@ A wiki claim the owner asked to record that is **not** derived from a saved file
 give that page/block `provenance: manual`. Never flag a `provenance: manual` note as inconsistent with
 the files — it is authoritative; a calendar event never supersedes it. Record sensitive identifiers
 (account / document / licence / card numbers) as the **last 4 digits only**, never in full — a
-deterministic guard checks this at the write, so a slip is caught and counted, not shipped.
+deterministic guard checks every field you return before any of it is written, so a slip is caught
+and counted, not shipped.
 
 ## Surfacing what needs a human — precise and quiet
 

@@ -204,7 +204,7 @@ Work through these steps; every step except **Understand** is deterministic.
    choice: the text read and the local tier are free at any volume, the vision tier is billed per
    page, and a backlog is thousands of pages. Descend only as far as a file actually needs, never
    enter at the top "to be safe", and name the tier each file was read at in its entry — a run whose
-   spend cannot be attributed to a tier cannot be tuned. The skill fixes the *rungs*; which backend
+   spend cannot be attributed to a tier cannot be tuned (`extraction.tier`). The skill fixes the *rungs*; which backend
    fills a rung is the deployment's to declare and its own to keep current.
    **A rung must be checked against the material's languages, or it fails silently.** A local
    recogniser without the folder's script installed does not report that it cannot read the page: it
@@ -248,7 +248,7 @@ Work through these steps; every step except **Understand** is deterministic.
    Interleave into ONE new document and process that as the work
    item; move both originals to the run's `_Archive/` with entries pointing at the merged entry.
    The merged entry's id is the merged FILE's own SHA-256, like every entry — the hash contract
-   and the move guards in step 9 are unchanged. **Re-merge deduplication works through the
+   and the move guards in step 10 are unchanged. **Re-merge deduplication works through the
    halves**: each half keeps its own hash-keyed entry (`archived_half`, `merged_into` → the merged
    id; the merged entry lists both in `merged_from`), so a re-dropped half is an ordinary
    duplicate of an already-filed file and the pair is never re-merged. That linkage — not the
@@ -338,39 +338,42 @@ Work through these steps; every step except **Understand** is deterministic.
    the only steps whose judgement is about the *whole* batch — the strongest reasoning available, run
    twice a run. Routing both at one tier is a decision either way; make it deliberately (the
    framework rule is in [`ARCHITECTURE.md`](../../ARCHITECTURE.md)).
-8. **Name and place — deterministically, from the fields.** Filename pattern:
+8. **Guard the answers — once, where they cross into the deterministic side.** Every free-text
+   field the reasoning steps returned (`party`, `doc_type`, `detail`, `title`, `summary`,
+   `key_facts`, `look_reason`) passes the deterministic redaction guard **here**, before any of them
+   is used to name a file, move it, write an entry or render a view. Placing it at the manifest
+   write would be too late: the very next step builds the filename out of `party` and `detail`, and
+   a full account number a model put in `detail` would already be on the filesystem — in the name,
+   in `current_path`, and in `rename_history` — before any guard saw it. One crossing, one guard,
+   and everything downstream is already clean. The targets are typed, not a digit hunt —
+   `reference_numbers` is a field this schema *wants* populated, so it passes at the depth the
+   operator declared while account, card, licence and document numbers reduce to their last 4 — and
+   every redaction is **counted and reported in the run summary**, because a guard that silently
+   does nothing and one that silently does everything look the same from outside. The framework
+   rule, and why the prompt instruction alone was never enough, is in
+   [`ARCHITECTURE.md`](../../ARCHITECTURE.md).
+9. **Name and place — deterministically, from the guarded fields.** Filename pattern:
    `<Party> - <DocType> <YYYY-MM-DD> <Detail>.<ext>` (e.g.
    `Wren - Lab Report 2026-03-14 Vitamin D.pdf`). Fallbacks are fixed: unknown party → `Unknown`; no
    trustworthy date → the date segment is omitted, never fabricated; empty detail → omitted. Keep
    the extension, lowercased. Sanitise every segment (NFC-normalise; strip path separators,
    control characters, trailing dots/spaces; cap length in UTF-8 bytes — filesystem limits are
    byte limits). On a name collision append ` (2)`, ` (3)`… — never overwrite, never skip.
-9. **Move under guards** — the **move guards** the manifest reference defines, unchanged: in-folder
+10. **Move under guards** — the **move guards** the manifest reference defines, unchanged: in-folder
    containment and symlink refusal, destination folders created only when a move needs them, a
    hash-verify against the entry id after the move, a two-phase op log replayed on the next run so
    an interrupted move is resolved by content, and an undo entry appended before each move is
    attempted. The category and reason folders are this skill's destinations; the guards they are
    reached through are every producer's.
-10. **Record — through the redaction guard, which is the last thing between a model and the disk.**
-   Every free-text field the understanding step returned (`title`, `summary`, `detail`,
-   `key_facts`, `look_reason`) passes the deterministic guard **before** the merge, not after and
-   not inside an earlier model call: the manifest is the source of truth and it travels with the
-   parcel, so a number scrubbed only at render time is a number the manifest still carries to
-   whoever opens it next. The guard's targets are typed, not a digit hunt — `reference_numbers` is a
-   field this schema *wants* populated, so it passes at the depth the operator declared while
-   account, card, licence and document numbers reduce to their last 4 — and every redaction is
-   **counted and reported in the run summary**, because a guard that silently does nothing and one
-   that silently does everything look the same from outside. The framework rule, and why the prompt
-   instruction alone was never enough, is in [`ARCHITECTURE.md`](../../ARCHITECTURE.md). Then merge
-   each entry into `manifest.json` (atomic write). A re-understood file keeps its
+11. **Record.** Merge each entry into `manifest.json` (atomic write). A re-understood file keeps its
    identity fields (first seen, name history, placement) and refreshes the descriptive ones. An
    edited file is a new entry (new hash) understood **in place** — do not rename or move a file the
    human has already accepted under its name; the old entry departs.
-11. **Reconcile presence — against a full walk, never a limited subset.** The scan contract's
+12. **Reconcile presence — against a full walk, never a limited subset.** The scan contract's
    departed-entry rule (flag, never delete — the audit's history is the point), read through the
    conveyor: a whole run folder leaving is normal, so its entries simply depart rather than
    reading as loss, and a departed file's return sheds the flag.
-12. **Render the views** from the manifest: `AUDIT.md` (self-describing header, sections by
+13. **Render the views** from the manifest: `AUDIT.md` (self-describing header, sections by
    category, connections rendered to current filenames, "Needs a look" with each file's reason,
    "No longer present"), the run folder's manifest+audit slice, and `NEEDS A LOOK.md` when — and
    only when — the run's look folder is non-empty.

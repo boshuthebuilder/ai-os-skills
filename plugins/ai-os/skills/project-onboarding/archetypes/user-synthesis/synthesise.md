@@ -101,7 +101,8 @@ Rules:
   what changed).
 - **Reconcile, don't average.** Conflicting claims between projects are surfaced as conflicts.
 - **Sensitive identifiers, last-4 only**, exactly as the source pages already hold them; a
-  deterministic guard checks this at the write, so a slip is caught and counted, not shipped.
+  deterministic guard checks every field you return before any of it is written, so a slip is caught
+  and counted, not shipped.
 - **Authored notes carry through.** Source material marked `provenance: manual` is owner-asserted and
   authoritative — represent it faithfully; never contradict it from derived material.
 - Give every page you write frontmatter: `provenance: derived`, `last-updated: {date}`, `status: current`.

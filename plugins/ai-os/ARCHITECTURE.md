@@ -184,16 +184,20 @@ quote a number quotes it anyway often enough to matter, and it is holding the do
 it. So both are **write-time guards**, and the prompt rule is the first of two lines of defence, never
 the only one:
 
-> Every free-text field a reasoning step returns passes a deterministic redaction guard before it is
-> written or rendered. A rule that governs what may leave the system belongs at the boundary the
-> writes actually pass through, not in the prompt that asks for them.
+> Every free-text field a reasoning step returns passes a deterministic redaction guard **as it
+> crosses onto the deterministic side** — before any of it is used to name a file, write an entry or
+> render a view. A rule that governs what may leave the system belongs at the boundary the answers
+> actually pass through, not in the prompt that asks for them.
 
 Four properties keep the guard from becoming its own silent failure:
 
-- **It sits at the write, not in the pipeline.** Not on the reduce step, not on the summariser — a
-  redaction that lives inside a model call fails exactly when the model does. Put it where the entry
-  is committed and the view is rendered, so every path reaches it, including the failure paths and
-  the ones added later.
+- **It sits at the crossing — not inside the pipeline, and not at each write.** Not on the reduce
+  step, not on the summariser: a redaction that lives inside a model call fails exactly when the
+  model does. But "at each write" is the other trap, and the subtler one — a returned field is often
+  used to *derive* something before it is written, and a filename built from an unguarded field puts
+  the number on the filesystem before any write-time guard sees it. Guard the answers once, where
+  they enter the deterministic side, and everything downstream — names, entries, views, the paths
+  added later — is already clean.
 - **Its targets are typed, not a digit hunt.** A blind scrub over free text eats invoice numbers,
   case references and dates, and the manifest schema has a field that *wants* the reference numbers
   a document carries. The guard names the fields it scrubs and the identifier classes it scrubs for;
@@ -272,8 +276,9 @@ detail — any AI-OS deployment reproduces the defect unless the spec requires t
   over and over — a person under an unfamiliar name, an unrecognised account, a body the folder has
   never seen — and there the file is evidence, not identity. Keyed by path, one such concern mints one
   item per file that mentions it, and a batch of eighty documents raises eighty items with one answer
-  between them. Key those on the entity, carry the *evidence* as a list of paths that grows as more
-  files land, and the second file references the open item instead of raising a new one. This is the
+  between them. Key those on the entity, carry the *evidence* as a list that grows as more files
+  land — of paths, or of the content ids the archetype keys sources by, whichever identifies a
+  source there — and the second file references the open item instead of raising a new one. This is the
   same defect the lifecycle exists to close, one level down: re-raising across *files* rather than
   across *runs*, and the ledger alone does not catch it because every item is genuinely new.
 - **A batch pass answers what it can from the batch before it raises.** Where a whole run is visible

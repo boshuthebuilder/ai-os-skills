@@ -37,10 +37,10 @@ a `/1` file treats every added field as absent. The schema string is
 | `doc_date` | string or null | ISO date from the document's content; null when none was trustworthy |
 | `language` | string | primary language code (`en`, `zh`, …) |
 | `pages` | int or null | page count when known |
-| `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null}` |
+| `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null, tier: string|null}` — `tier` names the rung of the read ladder that actually produced the text (`text_layer`, `local_ocr`, `vision`, `speech`, or a rung the deployment adds), so a run's spend can be attributed; `null` on an entry written before the field existed, never a silent default |
 | `connections` | list | `{to: <sha256 of a related entry>, relation: <why>}` — real relationships only, recorded on BOTH entries (an invoice's entry names the receipt exactly as the receipt's names the invoice) |
 | `flags` | list of strings | named states, see below |
-| `look` | string, optional | the **class** of the concern, from the closed vocabulary below. Present on every entry that landed under `Needs a look/` — including the computed classes, which carry their own flag rather than `needs_a_look` — and absent when the entry needs no look at all |
+| `look` | string, optional | the **class** of the single concern that makes this entry a human's decision, from the producer's closed vocabulary below. At most one — a class the walk can compute is carried by its own flag or field, never duplicated here, so an entry with several computed defects still has at most one `look`. Absent when the entry raises no decision |
 | `look_reason` | string, optional | why this file needs a human decision, in the flagger's own words; absence ≡ `""` (every pre-v4 entry lacks it — consumers must treat missing as "no reason") |
 | `merged_from` | list, optional | on a merged split-scan document: the two source halves' sha256 ids |
 | `merged_into` | string, optional | on an archived split-scan half: the merged entry's sha256 id |
@@ -66,7 +66,7 @@ a `/1` file treats every added field as absent. The schema string is
 | `overlap` | string, optional | the overlap pair id this file's folder participates in (the audit's *Overlapping homes*) |
 | `generic_name` | bool, optional | the stem is a device or scanner default |
 | `plan_ref` | string, optional | `plans/<date>/move-plan.csv#<seq>` of the last approved row that touched this entry |
-| `convert_candidate` | object, optional | on an `unconverted` entry, the export the audit believes is this file's: `{path, match}` — `match` being `stem` (identical normalised stem), `stem_near` (normalised stem plus a modifier like "final"), or `none`. Absent means no candidate was found |
+| `convert_candidate` | object, optional | on a proprietary-class entry, the export the audit found for it: `{path, match}`, `match` being `stem` (identical normalised stem) or `stem_near` (normalised stem plus a modifier — "final", "signed", an appended date). Absent means no candidate was found at all. A `stem` match means the file **is** converted, so the entry carries no `unconverted` flag; a `stem_near` match is `unconverted` *with* the candidate named, so a `convert` row can point at what it thinks is not the export |
 
 **Duplicates do not mint entries.** Copies of the same bytes share one hash, so they share one key
 and one entry — the `/1` rule that a copy gets no entry of its own, unchanged. A duplicate group
@@ -97,9 +97,10 @@ document's entry id is still the merged file's own SHA-256 (the hash contract is
 — necessary because PDF writers embed creation metadata, so the same halves never merge to
 identical bytes twice.
 
-**Added in /2:** `root_stray` · `unconverted` (an `iwork` or other proprietary file with no
-converted export yet — the match rule is the `folder-curation` skill's, and the candidate export it
-found, or did not, is recorded in `convert_candidate`) · `hygiene` (a name defect; the defect kind
+**Added in /2:** `root_stray` · `unconverted` (an `iwork` or other proprietary file for which no
+export could be confidently matched — the match rule is the `folder-curation` skill's; a confident
+match clears the flag, a weak one leaves it set with the candidate named in `convert_candidate`) ·
+`hygiene` (a name defect; the defect kind
 goes in `look_reason`). Same rule as before: consumers ignore flags they don't know. All three
 describe the entry's path — on an entry that has a `copies` list they describe its canonical one;
 the other copies are described by their own `kind`, not by a flag.
@@ -112,15 +113,19 @@ person reads the reason. Keep the class closed and the reason free, never the re
 carried in prose has to be recovered by keyword-matching a sentence a model wrote, and two files
 with the same defect then land in different places because the wording drifted.
 
-**Producer `file-preprocessing`:** `unrecognisable` · `no_date` · `too_large` · `flagged`. The first
-three are the engine's own verdicts — computed from what extraction returned and which rung of the
-read ladder was reached — and correspond one-to-one with the `Needs a look/<Reason>/` folders. Only
-`flagged` is a model's to choose, and it always carries a non-empty `look_reason`.
+**Producer `file-preprocessing`:** `unrecognisable` · `no_date` · `too_large` · `flagged`. Exactly
+one applies, because the file lands in exactly one `Needs a look/<Reason>/` folder. The first three
+are the engine's own verdicts — computed from what extraction returned and which rung of the read
+ladder was reached; only `flagged` is a model's to choose, and it always carries a non-empty
+`look_reason`.
 
-**Producer `folder-curation`:** `misfiled` · `duplicate_redundant` · `overlapping_home` ·
-`generic_name` · `unconverted` · `hygiene` · `unreadable` · `root_stray` · `credentials`. All but
-`misfiled` and `credentials` are computed by the audit walk; those two belong to the `curate` step,
-with `look_reason` saying what it saw.
+**Producer `folder-curation`:** `misfiled` · `credentials` — the two judgements, both the `curate`
+step's, with `look_reason` saying what it saw. Its **computed** findings are deliberately *not* in
+this field: a curated file routinely has several at once (a root stray that is also generically
+named), and they are already carried by the flags and fields the walk sets (`root_stray`,
+`generic_name`, `unconverted`, `hygiene`, `overlap`, `copies[].kind`). The audit's *Needs a look*
+sections are grouped from those, not from a second encoding of them — one home per fact, and no
+cardinality to reconcile.
 
 **A computed class is never model-selected**, in either producer. A class the engine can derive is
 derived — offering it to a model as a choice reintroduces exactly the drift a closed vocabulary

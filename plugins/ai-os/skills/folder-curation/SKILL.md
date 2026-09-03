@@ -105,18 +105,26 @@ moves, spot edited files and strays, flag departed entries), then compute what a
   `Screenshot`, `document`, chat-export prefixes), counted per folder.
 - **Unreadable-by-design formats**: proprietary office formats, medical imaging, bundled software,
   camera originals, message files, counted per class and per folder; never flagged per run. A
-  proprietary file is `unconverted` only when **no export of it can be found**, and the search is
-  wider than the obvious one: people export to a sibling folder, to an outputs folder, and under a
-  modified name ("… final", "… signed", a date appended). Matching only `X.pages` against `X.pdf` in
-  the same folder therefore reports as unconverted a document that was converted years ago — and the
-  plan's answer to that is a `convert` row that makes a *second* export. Match on the **normalised
-  stem across the whole folder** (case, punctuation, whitespace and a short modifier list folded
-  out), break ties by modification time, and record the candidate it found on the entry
-  (`convert_candidate`, with how it matched) so a `convert` row can name the file it thinks is
-  missing and the owner can decline in one look. **Stay deterministic**: this pass makes no model
-  call, and comparing a proprietary bundle's *contents* to a PDF would need to open the format the
-  class policy says cannot be opened. A weak match is reported as a weak match; if a content-level
-  comparison is ever wanted, it belongs in `curate`, which already reads.
+  proprietary file is `unconverted` only when **no export of it can be confidently matched**, and
+  the search is wider than the obvious one: people export to a sibling folder, to an outputs folder,
+  and under a modified name ("… final", "… signed", a date appended). Matching only `X.pages`
+  against `X.pdf` in the same folder therefore reports as unconverted a document that was converted
+  years ago — and the plan's answer to that is a `convert` row that makes a *second* export. So
+  match on the **normalised stem across the whole folder** (case, punctuation, whitespace and a
+  short modifier list folded out), break ties by modification time, and let the strength of the
+  match decide the flag:
+  - a **confident** match (the normalised stems are identical) means the file *is* converted:
+    **no `unconverted` flag**, and the pairing recorded on the entry (`convert_candidate`,
+    `match: stem`) so a later rename does not silently re-raise it;
+  - a **weak** match (the stems agree only after a modifier is folded out) stays `unconverted`, but
+    with the candidate named — a `convert` row must point at the file it believes is not the export,
+    so the owner declines in one look instead of re-deriving the question;
+  - **no** match at all is `unconverted` with no `convert_candidate`: the plain case the flag was
+    always for.
+
+  **Stay deterministic**: this pass makes no model call, and comparing a proprietary bundle's
+  *contents* to a PDF would need to open the format the class policy says cannot be opened. If a
+  content-level comparison is ever wanted, it belongs in `curate`, which already reads.
 - **Hygiene defects**: trailing or leading whitespace in a name, hidden system files, names that
   differ only by case, path components over the filesystem's byte limit, obvious misspellings the
   owner may confirm.
@@ -126,14 +134,15 @@ moves, spot edited files and strays, flag departed entries), then compute what a
   path: adopted, not flagged), edited (same path, new hash), new duplicate groups, new root strays,
   new files landing in an overlapping home.
 
-**Every finding carries a class from the closed `look` vocabulary**, and the free-text reason
-explains rather than classifies. The audit's sections, the review lists and the plan's grouping are
-all derived from the class, so it has to be a value and not a phrase: recovered by keyword from a
-sentence, "the same defect" is whatever the wording happened to be that pass, and two identical
-files land in different sections. The audit's own classes are **computed, never chosen by a model**
-— `duplicate_redundant`, `overlapping_home`, `generic_name`, `unconverted`, `hygiene`, `unreadable`,
-`root_stray` all fall out of the walk; only `misfiled` and `credentials` are judgements, and they
-are `curate`'s to make. The vocabulary and its extension rule are in
+**Every finding is a class, never a phrase**, and the free-text reason explains rather than
+classifies. The audit's sections, the review lists and the plan's grouping are all derived from the
+class, so it has to be a value: recovered by keyword from a sentence, "the same defect" is whatever
+the wording happened to be that pass, and two identical files land in different sections. The
+audit's own findings are **computed, never chosen by a model**, and they are carried by the flags
+and fields the walk already sets — `root_stray`, `generic_name`, `unconverted`, `hygiene`,
+`overlap`, `copies[].kind` — which is also why a file can hold several at once without anything
+having to choose between them. The `look` field is reserved for the two *judgements*, `misfiled` and
+`credentials`, which are `curate`'s to make; the vocabulary and its extension rule are in
 [`manifest-schema.md`](../file-preprocessing/references/manifest-schema.md).
 
 Render `AUDIT.md` from the manifest as a pure function of the manifest (no clock; stamped from the
@@ -157,8 +166,9 @@ Show the audit, then ask, in this order, and record every answer in the rulebook
    domains to index at reduced depth (administration-only for a legal matter, dates-only for
    health). Recorded as a decision, so later passes never re-raise it — and **compiled into the job
    config, not left in prose**: the exclusions become the deterministic `exclude` list the gate
-   applies before a model sees anything, and the depths become the redaction guard's settings at the
-   write. A depth that lives only in a rulebook sentence is a preference a model is asked to honour;
+   applies before a model sees anything, and the depths become the redaction guard's settings on
+   what a model returns. A depth that lives only in a rulebook sentence is a preference a model is
+   asked to honour;
    the two enforcement points are in [`ARCHITECTURE.md`](../../ARCHITECTURE.md), and they are
    different failures — the gate cannot stop a summary from quoting a number, and the guard cannot
    un-read a credentials file.

@@ -10,14 +10,16 @@ A **MINOR** for `ai-os`, from a real preprocessing run over a family backlog. Si
 about the seam between a model's answer and what the system does with it — none about the reasoning
 itself.
 
-- **A redaction guard at the write** (`ARCHITECTURE.md`, new section): the last-4 rule and the
-  sensitivity depths were only ever *prompt instructions*, and a model holding the document quotes
-  the number it was told not to. They are now write-time guards with four stated properties — at the
-  write and not inside a model call, typed targets rather than a digit hunt (`reference_numbers` is
-  a field the schema wants populated), every redaction counted and reported, and exclusion enforced
-  by the gate rather than the guard. The chain from the curation interview's answer to the
-  enforcement point is stated end to end; the four prompt templates that carried the rule now point
-  at it instead of only asserting it.
+- **A redaction guard where the answers cross into the deterministic side** (`ARCHITECTURE.md`,
+  new section; `file-preprocessing` step 8): the last-4 rule and the sensitivity depths were only
+  ever *prompt instructions*, and a model holding the document quotes the number it was told not to.
+  They are now a deterministic guard with four stated properties — at the crossing rather than
+  inside a model call *or* at each write (a filename built from an unguarded field puts the number
+  on the filesystem before any write-time guard sees it), typed targets rather than a digit hunt
+  (`reference_numbers` is a field the schema wants populated), every redaction counted and reported,
+  and outright exclusion enforced by the gate rather than the guard. The chain from the curation
+  interview's answer to the enforcement point is stated end to end; the four prompt templates that
+  carried the rule now point at it instead of only asserting it.
 - **A chunked reasoning step's answers are reconciled before any is applied** (`ARCHITECTURE.md`,
   `file-preprocessing`): near-identical inputs are where a model returns one answer for two files or
   a path it tidied on the way out. A missing answer is visible and retryable; an answer attached to
@@ -33,8 +35,11 @@ itself.
 - **A closed `look` vocabulary** (manifest schema `look` field, both producers): the class is a
   value the engine routes on, the reason stays free text a person reads. A class recovered by
   keyword from a model's sentence makes "the same defect" a function of phrasing. Computed classes
-  are never model-selected — `file-preprocessing` leaves the model only `flagged`; `folder-curation`
-  leaves it only `misfiled` and `credentials`.
+  are never model-selected, and never duplicated into `look` either — `file-preprocessing` leaves
+  the model only `flagged` (its other three classes are the engine's verdicts, and a file lands in
+  exactly one look folder), while `folder-curation` keeps `look` for its two judgements, `misfiled`
+  and `credentials`, because its computed findings co-occur on one file and are already carried by
+  the flags and fields the walk sets.
 - **The read ladder is a cost ladder, and a rung is checked against the material's languages**
   (`file-preprocessing`): descend only as far as a file needs, record the tier each file was read
   at, and treat an empty extraction from a file that should have text as a **capability gap to
@@ -44,9 +49,14 @@ itself.
   is declared per stage where a deployment can.
 - **`unconverted` matches across the whole folder, not the same-folder sibling** (`folder-curation`,
   schema `convert_candidate`): exports live one folder over and under modified names, and a false
-  `unconverted` becomes a `convert` row that makes a second export. The match stays deterministic —
-  normalised stem plus an mtime tiebreak, the candidate recorded on the entry — because a
+  `unconverted` becomes a `convert` row that makes a second export. Match *strength* now decides the
+  flag — an identical normalised stem clears it, a stem that agrees only after a modifier is folded
+  out leaves it set with the candidate named so a `convert` row points at what it doubts, and no
+  match leaves it set with no candidate. The match stays deterministic (stems and timestamps): a
   content-level comparison would mean opening the format the class policy says cannot be opened.
+
+`extraction` gains an optional `tier`, naming the rung of the read ladder that produced the text so
+a run's spend can be attributed.
 
 Additive throughout: no skill renamed or removed, no placeholder introduced or made required. The
 new `look` and `convert_candidate` fields are optional, and the `look` vocabulary is extensible the
