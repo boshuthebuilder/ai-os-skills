@@ -33,7 +33,9 @@ Per entry, on top of the scan contract's own fields:
   a second export. Match strength decides the flag — an identical normalised stem clears it (the
   file is converted; the pairing is still recorded in `convert_candidate`), a stem that agrees only
   after a modifier is folded out leaves it set *with* the candidate named, and no match at all
-  leaves it set with no candidate. The comparison stays on names and timestamps: a content-level
+  leaves it set with no candidate. A recorded pairing is carried forward and **re-confirmed by the
+  export's content id**, not by its name: this pass recomputes from disk every run, so a pairing
+  held by name dies at the first rename and the file is re-flagged for ever. The comparison stays on names and timestamps: a content-level
   match would mean opening the format the class policy says cannot be opened, and this pass makes no
   model call.
 - **Hygiene defects** (`hygiene`, kind in `look_reason`) — leading/trailing whitespace in a name,

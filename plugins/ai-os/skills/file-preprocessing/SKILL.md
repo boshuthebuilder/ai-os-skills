@@ -339,9 +339,13 @@ Work through these steps; every step except **Understand** is deterministic.
    twice a run. Routing both at one tier is a decision either way; make it deliberately (the
    framework rule is in [`ARCHITECTURE.md`](../../ARCHITECTURE.md)).
 8. **Guard the answers — once, where they cross into the deterministic side.** Every free-text
-   field the reasoning steps returned (`party`, `doc_type`, `detail`, `title`, `summary`,
-   `key_facts`, `look_reason`) passes the deterministic redaction guard **here**, before any of them
-   is used to name a file, move it, write an entry or render a view. Placing it at the manifest
+   field the reasoning steps returned passes the deterministic redaction guard **here**, before any
+   of them is used to name a file, move it, write an entry or render a view. That is the whole set,
+   named rather than gestured at: the fields that reach the manifest (`title`, `summary`,
+   `key_facts`, `look_reason`, `parties`, and each `connections[].relation` the reduce pass wrote)
+   *and* the ones only a filename is derived from (`party`, `doc_type`, `detail`). `parties` and
+   `relation` are the two a guard written from memory omits, and the two a model most naturally
+   qualifies with the number it just read ("… — account 12345678"). Placing it at the manifest
    write would be too late: the very next step builds the filename out of `party` and `detail`, and
    a full account number a model put in `detail` would already be on the filesystem — in the name,
    in `current_path`, and in `rename_history` — before any guard saw it. One crossing, one guard,

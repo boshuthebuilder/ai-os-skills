@@ -37,7 +37,7 @@ a `/1` file treats every added field as absent. The schema string is
 | `doc_date` | string or null | ISO date from the document's content; null when none was trustworthy |
 | `language` | string | primary language code (`en`, `zh`, …) |
 | `pages` | int or null | page count when known |
-| `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null, tier: string|null}` — `tier` names the rung of the read ladder that actually produced the text (`text_layer`, `local_ocr`, `vision`, `speech`, or a rung the deployment adds), so a run's spend can be attributed; `null` on an entry written before the field existed, never a silent default |
+| `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null, tier: string|null}` — `tier` names the rung of the read ladder that actually produced the text (`text_layer`, `local_ocr`, `vision`, `speech`, or a rung the deployment adds), so a run's spend can be attributed. `none` when no rung produced any — the entry is `unreadable` or `too_large` — which is a real outcome to count, not an absence. `null` means only "written before this field existed"; it is never a silent default for a read that happened |
 | `connections` | list | `{to: <sha256 of a related entry>, relation: <why>}` — real relationships only, recorded on BOTH entries (an invoice's entry names the receipt exactly as the receipt's names the invoice) |
 | `flags` | list of strings | named states, see below |
 | `look` | string, optional | the **class** of the single concern that makes this entry a human's decision, from the producer's closed vocabulary below. At most one — a class the walk can compute is carried by its own flag or field, never duplicated here, so an entry with several computed defects still has at most one `look`. Absent when the entry raises no decision |
@@ -66,7 +66,7 @@ a `/1` file treats every added field as absent. The schema string is
 | `overlap` | string, optional | the overlap pair id this file's folder participates in (the audit's *Overlapping homes*) |
 | `generic_name` | bool, optional | the stem is a device or scanner default |
 | `plan_ref` | string, optional | `plans/<date>/move-plan.csv#<seq>` of the last approved row that touched this entry |
-| `convert_candidate` | object, optional | on a proprietary-class entry, the export the audit found for it: `{path, match}`, `match` being `stem` (identical normalised stem) or `stem_near` (normalised stem plus a modifier — "final", "signed", an appended date). Absent means no candidate was found at all. A `stem` match means the file **is** converted, so the entry carries no `unconverted` flag; a `stem_near` match is `unconverted` *with* the candidate named, so a `convert` row can point at what it thinks is not the export |
+| `convert_candidate` | object, optional | on a proprietary-class entry, the export the audit found for it: `{id, path, match}`. `id` is the export's own sha256 and is the authority — the pairing is re-confirmed by it first, so renaming either file does not break it; `path` is where that content sat at the last scan. `match` is `stem` (identical normalised stem) or `stem_near` (normalised stem plus a modifier — "final", "signed", an appended date), and records how the pairing was *first* established. Absent means no candidate was found at all. A `stem` match means the file **is** converted, so the entry carries no `unconverted` flag; a `stem_near` match is `unconverted` *with* the candidate named, so a `convert` row can point at what it thinks is not the export |
 
 **Duplicates do not mint entries.** Copies of the same bytes share one hash, so they share one key
 and one entry — the `/1` rule that a copy gets no entry of its own, unchanged. A duplicate group
@@ -119,13 +119,16 @@ are the engine's own verdicts — computed from what extraction returned and whi
 ladder was reached; only `flagged` is a model's to choose, and it always carries a non-empty
 `look_reason`.
 
-**Producer `folder-curation`:** `misfiled` · `credentials` — the two judgements, both the `curate`
-step's, with `look_reason` saying what it saw. Its **computed** findings are deliberately *not* in
-this field: a curated file routinely has several at once (a root stray that is also generically
-named), and they are already carried by the flags and fields the walk sets (`root_stray`,
-`generic_name`, `unconverted`, `hygiene`, `overlap`, `copies[].kind`). The audit's *Needs a look*
-sections are grouped from those, not from a second encoding of them — one home per fact, and no
-cardinality to reconcile.
+**Producer `folder-curation`:** `misfiled` · `credentials` · `flagged`, all three the `curate`
+step's judgements, with `look_reason` saying what it saw. These classify the items in **`curate`'s
+move-plan**, not entries in this file: in that archetype the manifest is written only by the
+deterministic `audit`, which makes no model call, and `curate` writes only the plan — so a `look` on
+a manifest *entry* is `file-preprocessing`'s alone. The audit's **computed** findings are not in
+this field either: a curated file routinely has several at once (a root stray that is also
+generically named), and they are already carried by the flags and fields the walk sets
+(`root_stray`, `generic_name`, `unconverted`, `hygiene`, `overlap`, `copies[].kind`). Its *Needs a
+look* sections are grouped from those, not from a second encoding of them — one home per fact, and
+no cardinality to reconcile.
 
 **A computed class is never model-selected**, in either producer. A class the engine can derive is
 derived — offering it to a model as a choice reintroduces exactly the drift a closed vocabulary
@@ -143,13 +146,22 @@ the field existed: read it as `flagged`.
 - Never delete an entry; `departed` marks absence.
 - When writing, preserve identity fields you didn't re-derive (`first_seen`, `rename_history`,
   `original_name`), write atomically, and bump `generated_at`.
-- **Free text passes the redaction guard before it is written, not before it is rendered.** `title`,
-  `summary`, `detail`, `key_facts` and `look_reason` come from a model that has just read the
-  document, and this file is the source of truth *and* travels with the parcel — a number scrubbed
-  only in `AUDIT.md` is a number the manifest still hands to whoever opens it next. The
-  `reference_numbers` list is the typed exception: it is a field the schema wants populated, so it
-  passes at the depth the folder declared rather than being scrubbed blind. The framework rule and the
-  guard's four properties are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
+- **`convert_candidate` is derived but sticky.** Carry the previous pass's value forward and
+  re-confirm it by `id`: if that content is still in the folder, the pairing holds whatever either
+  file is now called. Only when the id is gone does the stem search run again. A pairing recomputed
+  from names alone is undone by the first descriptive rename — including the ones this system's own
+  medium-depth curation performs — and the file is re-flagged `unconverted` for ever after.
+- **Every free-text field a model produced is guarded before it is written — the list is the whole
+  list.** `title`, `summary`, `key_facts`, `look_reason`, `parties` and each `connections[].relation`
+  come from a model that has just read the document, and this file is the source of truth *and*
+  travels with the parcel — a number scrubbed only in `AUDIT.md` is a number the manifest still
+  hands to whoever opens it next. `parties` and `relation` are the easy ones to forget and the ones
+  a model most naturally qualifies ("… — account 12345678"), so name them explicitly rather than
+  relying on "the free-text fields". The `reference_numbers` list is the typed exception: it is a
+  field the schema wants populated, so it passes at the depth the folder declared rather than being
+  scrubbed blind. Fields a producer only *derives* from (a filename part like `detail`) are guarded
+  at the same crossing even though they never land here — see the framework rule and the guard's
+  four properties in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
 - `AUDIT.md` is derived; regenerate it from the manifest rather than editing it.
 
 ## Shared contracts

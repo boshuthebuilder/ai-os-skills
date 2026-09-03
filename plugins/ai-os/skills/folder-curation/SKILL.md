@@ -115,7 +115,11 @@ moves, spot edited files and strays, flag departed entries), then compute what a
   match decide the flag:
   - a **confident** match (the normalised stems are identical) means the file *is* converted:
     **no `unconverted` flag**, and the pairing recorded on the entry (`convert_candidate`,
-    `match: stem`) so a later rename does not silently re-raise it;
+    `match: stem`). Record it by the export's **content id**, not its path, and re-confirm it by
+    that id on every later pass: the audit recomputes from disk each run, so a pairing held by name
+    is undone by the first descriptive rename — including the ones this skill's own medium depth
+    performs through `file-preprocessing` — and the file is re-flagged `unconverted` for ever after,
+    proposing an export that already exists;
   - a **weak** match (the stems agree only after a modifier is folded out) stays `unconverted`, but
     with the candidate named — a `convert` row must point at the file it believes is not the export,
     so the owner declines in one look instead of re-deriving the question;
@@ -141,8 +145,9 @@ the wording happened to be that pass, and two identical files land in different 
 audit's own findings are **computed, never chosen by a model**, and they are carried by the flags
 and fields the walk already sets — `root_stray`, `generic_name`, `unconverted`, `hygiene`,
 `overlap`, `copies[].kind` — which is also why a file can hold several at once without anything
-having to choose between them. The `look` field is reserved for the two *judgements*, `misfiled` and
-`credentials`, which are `curate`'s to make; the vocabulary and its extension rule are in
+having to choose between them. The `look` classes are `curate`'s three *judgements* — `misfiled`,
+`credentials`, `flagged` — and they classify items in its move-plan, not entries in the manifest,
+which only the deterministic `audit` writes here. The vocabulary and its extension rule are in
 [`manifest-schema.md`](../file-preprocessing/references/manifest-schema.md).
 
 Render `AUDIT.md` from the manifest as a pure function of the manifest (no clock; stamped from the
