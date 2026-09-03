@@ -102,6 +102,33 @@ state yields the same gather and the same writes; only one stage is a fresh samp
 only, which are never presented to a model; without it a library of photographs or imaging costs a
 full walk every tick, or is silently skipped, which is worse.
 
+**A reasoning step split across chunks is still one step, and the join is deterministic.** When a
+batch is too large for one call, the answers come back in pieces and something has to put them
+together — and that join is where a nondeterministic stage does its quietest damage. An answer
+*missing* is visible and retryable; an answer attached to the **wrong item** is a confident, correctly
+formatted, wrong result that no downstream step can detect. Near-identical inputs are where it
+happens: a run of monthly statements, a folder of timestamped scans, a set of images named by
+convention. Two rules make the join safe, and both belong to the deterministic side:
+
+- **Answers are matched by an identifier the engine issued**, never by position in the reply and
+  never by echoing back a path or a name — those are precisely the values a model normalises,
+  truncates or collapses when two inputs look alike.
+- **The returned set is reconciled against the requested set before anything is applied**: exact set
+  equality, a duplicate id rejected, an unknown id rejected. A chunk that fails reconciliation is
+  **retried halved, never applied in part** — halving separates the look-alikes that caused the
+  collapse — down to a chunk of one, where the failure is a single unanswered item and the ordinary
+  retry path takes it. Applying the matched subset of a failed chunk is the tempting wrong move: it
+  banks exactly the answers whose neighbours were mishandled.
+
+**A job's reasoning stages may have different capability needs, and routing is declared per stage.**
+Model routing (`compatible_models` and its budget siblings) is written per *job* because most jobs
+reason once. A job that reasons more than once — a per-item pass over a batch and then one pass over
+the whole batch's results — has two different requirements: the per-item stage is small-context, high
+volume and belongs on the cheapest backend that clears the bar, while the whole-batch stage sees
+everything at once and is the one that needs the strongest reasoning. A deployment that can only
+route per job resolves the whole job at the stronger tier and pays the per-item volume at that price;
+say which stage needs what, so the choice is visible rather than accidental.
+
 ## The gate before the model
 
 The single most important cost-and-robustness property:
@@ -148,6 +175,43 @@ requirement, not prompt etiquette: without it a prompt cannot tell "this page is
 wasn't shown this run", and the review found that ambiguity is what makes a model report false
 orphans, false missing-pages, and rewrite pages whose unseen tail it then drops. Mark the partiality
 deterministically at the boundary; the prompt templates are written to trust those markers.
+
+## Redaction is a guard, not an instruction
+
+Two contracts in this framework are stated to the model as instructions — *record identifiers as the
+last 4 digits only*, and *never read what the sensitivity decision excluded*. A model asked not to
+quote a number quotes it anyway often enough to matter, and it is holding the document that contains
+it. So both are **write-time guards**, and the prompt rule is the first of two lines of defence, never
+the only one:
+
+> Every free-text field a reasoning step returns passes a deterministic redaction guard before it is
+> written or rendered. A rule that governs what may leave the system belongs at the boundary the
+> writes actually pass through, not in the prompt that asks for them.
+
+Four properties keep the guard from becoming its own silent failure:
+
+- **It sits at the write, not in the pipeline.** Not on the reduce step, not on the summariser — a
+  redaction that lives inside a model call fails exactly when the model does. Put it where the entry
+  is committed and the view is rendered, so every path reaches it, including the failure paths and
+  the ones added later.
+- **Its targets are typed, not a digit hunt.** A blind scrub over free text eats invoice numbers,
+  case references and dates, and the manifest schema has a field that *wants* the reference numbers
+  a document carries. The guard names the fields it scrubs and the identifier classes it scrubs for;
+  a field the deployment declares as a reference list is passed through, and its own depth is set by
+  the same sensitivity decision.
+- **A redaction is reported, never silent.** Count them per run, and name the field. A guard that
+  quietly does nothing and a guard that quietly does everything look identical from outside — a
+  count is what tells the owner the prompt rule is holding, or that it stopped.
+- **Exclusion is enforced by the gate, not by the guard.** The paths the owner excluded outright
+  never reach a model at all (the deterministic `exclude` list in the job config); the guard is for
+  what a model returns about the material it *was* given. The two are different failures and both
+  are needed — the guard cannot un-read a credentials file, and the gate cannot stop a summary of a
+  medical letter from quoting a number.
+
+The chain is one line, from decision to enforcement: the interview's sensitivity answers land in the
+folder's rulebook, the rulebook's exclusions and per-domain depths are compiled into the job config,
+and the guard applies the depths at the write. A depth recorded in prose and nowhere else is a
+preference, not a control.
 
 ## Consuming a pinned release
 
@@ -199,10 +263,24 @@ rediscovered and re-surfaced it every pass. This is a **framework-level contract
 detail — any AI-OS deployment reproduces the defect unless the spec requires the lifecycle:
 
 - **Every escalation has a stable key** — a normalised function of the item + its reason class + the
-  source **path/identity** (not its content hash, which changes whenever the evidence does, and would
-  mint a new identity instead of matching the existing concern) — so "the same concern" is recognisable
-  across runs even as wording drifts. The evidence hash is stored *alongside* the key, for
+  **subject the concern is about** (not its content hash, which changes whenever the evidence does, and
+  would mint a new identity instead of matching the existing concern) — so "the same concern" is
+  recognisable across runs even as wording drifts. The evidence hash is stored *alongside* the key, for
   change-detection, not folded *into* it.
+- **The key's subject is what the question is about, which is often not the file it was found in.**
+  Some concerns *are* per-file ("this scan will not open"); many are about an entity a batch mentions
+  over and over — a person under an unfamiliar name, an unrecognised account, a body the folder has
+  never seen — and there the file is evidence, not identity. Keyed by path, one such concern mints one
+  item per file that mentions it, and a batch of eighty documents raises eighty items with one answer
+  between them. Key those on the entity, carry the *evidence* as a list of paths that grows as more
+  files land, and the second file references the open item instead of raising a new one. This is the
+  same defect the lifecycle exists to close, one level down: re-raising across *files* rather than
+  across *runs*, and the ledger alone does not catch it because every item is genuinely new.
+- **A batch pass answers what it can from the batch before it raises.** Where a whole run is visible
+  at once (a reduce pass over every entry, a reconcile over the whole wiki), an entity that is
+  unfamiliar in one item is often resolved by another in the same batch. Resolve there and raise the
+  residue; a job that raises per-item questions its own batch already answered is loud without being
+  informative.
 - **The deployment persists raised items** with a status (`open | resolved | dismissed`); the human's
   resolution actions (a dashboard button, a reply) write that state. Escalations are durable records,
   not fire-and-forget notifications.

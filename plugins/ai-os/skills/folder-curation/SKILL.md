@@ -104,7 +104,19 @@ moves, spot edited files and strays, flag departed entries), then compute what a
 - **Generic names**: files whose stem is a device or scanner default (`IMG_`, `Scanned Document`,
   `Screenshot`, `document`, chat-export prefixes), counted per folder.
 - **Unreadable-by-design formats**: proprietary office formats, medical imaging, bundled software,
-  camera originals, message files, counted per class and per folder; never flagged per run.
+  camera originals, message files, counted per class and per folder; never flagged per run. A
+  proprietary file is `unconverted` only when **no export of it can be found**, and the search is
+  wider than the obvious one: people export to a sibling folder, to an outputs folder, and under a
+  modified name ("… final", "… signed", a date appended). Matching only `X.pages` against `X.pdf` in
+  the same folder therefore reports as unconverted a document that was converted years ago — and the
+  plan's answer to that is a `convert` row that makes a *second* export. Match on the **normalised
+  stem across the whole folder** (case, punctuation, whitespace and a short modifier list folded
+  out), break ties by modification time, and record the candidate it found on the entry
+  (`convert_candidate`, with how it matched) so a `convert` row can name the file it thinks is
+  missing and the owner can decline in one look. **Stay deterministic**: this pass makes no model
+  call, and comparing a proprietary bundle's *contents* to a PDF would need to open the format the
+  class policy says cannot be opened. A weak match is reported as a weak match; if a content-level
+  comparison is ever wanted, it belongs in `curate`, which already reads.
 - **Hygiene defects**: trailing or leading whitespace in a name, hidden system files, names that
   differ only by case, path components over the filesystem's byte limit, obvious misspellings the
   owner may confirm.
@@ -113,6 +125,16 @@ moves, spot edited files and strays, flag departed entries), then compute what a
 - **Drift since the last pass** (from the second run on): added, removed, moved (same hash, new
   path: adopted, not flagged), edited (same path, new hash), new duplicate groups, new root strays,
   new files landing in an overlapping home.
+
+**Every finding carries a class from the closed `look` vocabulary**, and the free-text reason
+explains rather than classifies. The audit's sections, the review lists and the plan's grouping are
+all derived from the class, so it has to be a value and not a phrase: recovered by keyword from a
+sentence, "the same defect" is whatever the wording happened to be that pass, and two identical
+files land in different sections. The audit's own classes are **computed, never chosen by a model**
+— `duplicate_redundant`, `overlapping_home`, `generic_name`, `unconverted`, `hygiene`, `unreadable`,
+`root_stray` all fall out of the walk; only `misfiled` and `credentials` are judgements, and they
+are `curate`'s to make. The vocabulary and its extension rule are in
+[`manifest-schema.md`](../file-preprocessing/references/manifest-schema.md).
 
 Render `AUDIT.md` from the manifest as a pure function of the manifest (no clock; stamped from the
 manifest's own `generated_at`). Every section carries its count **even when the count is zero**: a
@@ -133,9 +155,18 @@ Show the audit, then ask, in this order, and record every answer in the rulebook
 5. **Which formats are working formats**, and whether the owner will convert or export them.
 6. **What is sensitive** beyond the last-4 rule: paths to exclude outright (credentials), and
    domains to index at reduced depth (administration-only for a legal matter, dates-only for
-   health). Recorded as a decision, so later passes never re-raise it.
+   health). Recorded as a decision, so later passes never re-raise it — and **compiled into the job
+   config, not left in prose**: the exclusions become the deterministic `exclude` list the gate
+   applies before a model sees anything, and the depths become the redaction guard's settings at the
+   write. A depth that lives only in a rulebook sentence is a preference a model is asked to honour;
+   the two enforcement points are in [`ARCHITECTURE.md`](../../ARCHITECTURE.md), and they are
+   different failures — the gate cannot stop a summary from quoting a number, and the guard cannot
+   un-read a credentials file.
 7. **Where AI outputs already sit** beside the sources, so the plan can relocate them.
-8. **Language and naming** for renamed files and folders, where the material is bilingual.
+8. **Language and naming** for renamed files and folders, where the material is bilingual — and the
+   **names each person and organisation appears under**, every script and nickname included. The
+   rulebook carries that alias list, and `file-preprocessing` is handed it in in-place mode, so a
+   folder that has answered "who is this" once is not asked again per file.
 
 ### 3. Propose (the only model step)
 
@@ -159,8 +190,12 @@ From the audit and the answers, emit a **move-plan** (schema:
 - **Never invent a taxonomy.** The owner's shape stays; the plan resolves conflicts inside it. A
   full re-taxonomy is a depth the owner must choose, and even then it is proposed as a mapping from
   every existing folder, never as a blank target tree.
-- Anything the model cannot place with confidence is a `needs_a_look` with a `what_would_resolve`,
-  not a guessed row.
+- Anything the model cannot place with confidence is a `needs_a_look` — a `look` class, a
+  `what_would_resolve`, and the evidence — not a guessed row. **One concern is one item, however
+  many rows it touches**: an unfamiliar party, an unrecognised account, a folder whose purpose is
+  unclear is asked once with its files as evidence, never once per file. The plan sees the whole
+  folder at once, so it is the step that can tell a repeated question from a real one; the lifecycle
+  rule is in [`ARCHITECTURE.md`](../../ARCHITECTURE.md).
 
 ### 4. Approve
 

@@ -40,11 +40,12 @@ up; the root pair is the long memory that survives parcels leaving.
   INSTRUCTIONS.md      ← optional standing operator context, family-editable. The per-run pasted
                          note is the SAME capability behind the same parser: either channel may
                          open with a ---fenced YAML front-matter of STRUCTURED engine directives
-                         (split-scan merge geometry; themes), stripped from the model-facing body
-                         and validated strictly — a malformed block refuses the run naming its
-                         source; a note-declared structure wins over a file-declared one. The
-                         operator normally writes NEITHER: the planning step extracts structure
-                         from plain prose (see the method), so context arrives as ordinary words
+                         (split-scan merge geometry; themes; the alias list), stripped from the
+                         model-facing body and validated strictly — a malformed block refuses the
+                         run naming its source; a note-declared structure wins over a file-declared
+                         one. The operator normally writes NEITHER: the planning step extracts
+                         structure from plain prose (see the method), so context arrives as
+                         ordinary words
   manifest.json        ← maintained by this method (root memory)
   AUDIT.md             ← maintained by this method
   Runs/<YYYY-MM-DD HHMM>/          ← one folder per run — the parcel a run hands back
@@ -103,8 +104,22 @@ failed". Two consequences:
   declare that it claims no placement, or the kept file's entry migrates onto the copy and the real
   filing is orphaned. A forced re-processing run re-admits what is in the drop folder, so a copy
   already set aside is not re-admitted — re-drop it.
-- A file the understanding step failed to answer for — omitted from a reply, or belonging to a
-  chunk that died on a timeout/exhausted backend — gets **one in-run sweeper retry**: the
+- **A chunk's answers are reconciled against what the chunk asked before any of them is applied,
+  and a chunk that fails reconciliation is retried halved, never applied in part.** Understanding
+  runs in chunks, and a batch of near-identical inputs — a run of monthly statements, a folder of
+  timestamped scans, images named by convention — is where a model quietly returns one answer for
+  two files, or the same path twice, or a path it tidied on the way out. A *missing* answer is
+  visible and the sweeper below takes it; an answer attached to the **wrong file** is a confident,
+  well-formed, wrong document name that nothing downstream can detect and the audit will happily
+  record. So match answers by an **id the engine issued**, never by position in the reply and never
+  by the path echoed back — the path is precisely what gets normalised when two inputs look alike —
+  and require exact set equality with the request, rejecting a duplicate id and an unknown one.
+  Halving separates the look-alikes that caused the collapse; a chunk of one that still fails is a
+  single unanswered file and falls to the sweeper. Applying the matched subset of a failed chunk is
+  the tempting wrong move: it banks exactly the answers whose neighbours were mishandled.
+- A file the understanding step failed to answer for — omitted from a reply, dropped by a chunk
+  that failed reconciliation, or belonging to a chunk that died on a timeout/exhausted backend —
+  gets **one in-run sweeper retry**: the
   unanswered files are re-asked in their own small chunk(s), with routing run fresh so a dead
   backend's files retry on the next eligible one. Still unanswered, the file **stays in
   `Incoming/`** with no manifest entry, and the next run retries it as an ordinary drop. Failures
@@ -185,6 +200,18 @@ Work through these steps; every step except **Understand** is deterministic.
    read directly; past every tier, `Needs a look/Too large/` — a terminal, visible stop, never an
    infinite retry. A file with no extractable text at all is never guessed at: it goes to
    `Needs a look/Unrecognisable/` keeping its original stem, entry flagged `unreadable`.
+   **The ladder is ordered by cost as much as by capability**, which is why it is a ladder and not a
+   choice: the text read and the local tier are free at any volume, the vision tier is billed per
+   page, and a backlog is thousands of pages. Descend only as far as a file actually needs, never
+   enter at the top "to be safe", and name the tier each file was read at in its entry — a run whose
+   spend cannot be attributed to a tier cannot be tuned. The skill fixes the *rungs*; which backend
+   fills a rung is the deployment's to declare and its own to keep current.
+   **A rung must be checked against the material's languages, or it fails silently.** A local
+   recogniser without the folder's script installed does not report that it cannot read the page: it
+   returns nothing, and a document a person reads at a glance lands in `Needs a look/Unrecognisable/`
+   as though it were a bad scan. Declare the scripts a rung covers, and treat an empty extraction
+   from a file whose class says it should have text as a **capability gap to report** — falling
+   through to the next rung — rather than a verdict about the document.
 3. **Straighten sideways scans — before pairing, so merges consume upright halves.** Decide the
    clockwise correction (0/90/180/270) from the READING DIRECTION of the page's recognised text
    lines, never from recognition scores (modern recognisers read text at any rotation nearly
@@ -254,13 +281,32 @@ Work through these steps; every step except **Understand** is deterministic.
    invented), `detail`, `title`, a rich 2–3 sentence `summary`, `key_facts` (dates, amounts,
    reference numbers actually read), `parties`, `category`, `connections` (real relationships to
    already-audited files, referenced by manifest id), an optional structured
-   `look` + `look_reason` (see above), and honest flags. **Judge every file fresh from its
+   `look` + `look_reason` (see below), and honest flags.
+   **`look` is a closed vocabulary and `look_reason` explains rather than classifies.** The model
+   may choose exactly one value, and only one: `flagged` — something about this document a person
+   must decide, stated in `look_reason`. Every other look state in this skill is **computed, never
+   chosen**: `unrecognisable` and `no_date` are the engine's verdicts about extraction, `too_large`
+   is the ladder's terminal rung. Letting a model select a computed value re-opens the drift the
+   folders exist to close — two files with the same defect classified differently because the wording
+   drifted. The reason stays free text because a person reads it; the class stays closed because the
+   engine routes on it (see the vocabulary in `references/manifest-schema.md`, which is extensible
+   the way flags are — a consumer ignores a value it does not know). **Judge every file fresh from its
    content** — when re-processing a file the manifest already knows, exclude its own prior entry
    from any index shown to the model, so a stale verdict is never inherited; a rich summary is
    incompatible with an "unreadable"-style title. **A `date_unreadable` verdict from a text-only
    read earns one bounded second look with the actual file open before `No date/` ever sees it**
    — the proven failure is an extraction that truncated a date a human reads at a glance; only an
-   answer with a real date and no attention request replaces the original judgement. **Name and
+   answer with a real date and no attention request replaces the original judgement.
+   **Known parties are context the step is given, not something it infers.** A staging folder
+   belongs to no project yet, so there is no wiki and no rulebook to consult: the operator's channel
+   is the standing `INSTRUCTIONS.md` and the pasted note, and an **alias list** — every name, script
+   and nickname a person appears under — is one of the structures the planning step extracts from
+   plain prose (step 7), through the same validators as declared front-matter. Given it, a document
+   naming someone under an unfamiliar form is understood, not queried. Without it the party is simply
+   recorded as read, `unknown_party` where it falls back — a flag, never a look: an unrecognised name
+   is not by itself a reason to interrupt a person, and the batch usually explains it (step 7). In
+   **in-place mode** the caller has a rulebook; it passes the alias list from it, so a folder that
+   has already answered "who is this" is not asked twice. **Name and
    describe in UK English by default**
    (general terms translate; a hard-to-translate proper noun keeps both forms side by side, so the
    file stays findable by either); `INSTRUCTIONS.md` is the channel to ask otherwise. Reuse an
@@ -269,16 +315,29 @@ Work through these steps; every step except **Understand** is deterministic.
    "Needs Review") are never categories the model may choose.
 7. **Reduce across the whole batch — after every group's answers validate, before anything
    applies.** (Its sibling, the whole-batch PLANNING call, runs before the merge: it designs the
-   category vocabulary AND extracts operator structure — merge geometry, themes — from plain
-   prose through exactly the front-matter validators; declared always wins over extracted.) Understanding in bounded groups leaves two things no group can settle: category
+   category vocabulary AND extracts operator structure — merge geometry, themes, the alias list —
+   from plain prose through exactly the front-matter validators; declared always wins over
+   extracted.) Understanding in bounded groups leaves two things no group can settle: category
    consistency (a group's pick is an accident of packing) and relationships between files read in
    different groups. One reduce pass over every accepted entry's compact row (id, prospective
    filename, category, title, a short summary, date, parties) plus the prior-run index settles
    both: re-route files whose category disagrees with how the whole batch hangs together (never
    into an attention or archive placement — those are the engine's), and record the real
    relationships **on BOTH entries** — an invoice knows its receipt exactly as the receipt knows
-   its invoice, including reverse links onto prior-run entries. Advisory by construction: a
+   its invoice, including reverse links onto prior-run entries. It also **collapses the batch's
+   repeated questions**: a concern about an entity that dozens of files raise separately — a party
+   none of them explains, an unrecognised account or body — is one question with one answer, so
+   reduce resolves what the batch itself settles (a name that appears in full on one document and
+   abbreviated on twenty) and emits the residue **once**, keyed on the entity with the files as its
+   evidence list, never once per file. Eighty look items with one answer between them is not
+   attention; it is noise that hides the eight real ones. Advisory by construction: a
    failed reduce leaves the groups' own judgements standing.
+   **The two model stages have opposite economics, and a deployment should route them separately.**
+   Understand is per-file, small-context and high-volume — the cheapest backend that clears the bar,
+   because the batch is what costs. Reduce and its planning sibling see everything at once and are
+   the only steps whose judgement is about the *whole* batch — the strongest reasoning available, run
+   twice a run. Routing both at one tier is a decision either way; make it deliberately (the
+   framework rule is in [`ARCHITECTURE.md`](../../ARCHITECTURE.md)).
 8. **Name and place — deterministically, from the fields.** Filename pattern:
    `<Party> - <DocType> <YYYY-MM-DD> <Detail>.<ext>` (e.g.
    `Wren - Lab Report 2026-03-14 Vitamin D.pdf`). Fallbacks are fixed: unknown party → `Unknown`; no
@@ -292,7 +351,18 @@ Work through these steps; every step except **Understand** is deterministic.
    an interrupted move is resolved by content, and an undo entry appended before each move is
    attempted. The category and reason folders are this skill's destinations; the guards they are
    reached through are every producer's.
-10. **Record.** Merge each entry into `manifest.json` (atomic write). A re-understood file keeps its
+10. **Record — through the redaction guard, which is the last thing between a model and the disk.**
+   Every free-text field the understanding step returned (`title`, `summary`, `detail`,
+   `key_facts`, `look_reason`) passes the deterministic guard **before** the merge, not after and
+   not inside an earlier model call: the manifest is the source of truth and it travels with the
+   parcel, so a number scrubbed only at render time is a number the manifest still carries to
+   whoever opens it next. The guard's targets are typed, not a digit hunt — `reference_numbers` is a
+   field this schema *wants* populated, so it passes at the depth the operator declared while
+   account, card, licence and document numbers reduce to their last 4 — and every redaction is
+   **counted and reported in the run summary**, because a guard that silently does nothing and one
+   that silently does everything look the same from outside. The framework rule, and why the prompt
+   instruction alone was never enough, is in [`ARCHITECTURE.md`](../../ARCHITECTURE.md). Then merge
+   each entry into `manifest.json` (atomic write). A re-understood file keeps its
    identity fields (first seen, name history, placement) and refreshes the descriptive ones. An
    edited file is a new entry (new hash) understood **in place** — do not rename or move a file the
    human has already accepted under its name; the old entry departs.
@@ -325,7 +395,10 @@ renamed in place; no run parcel is created, no category folder is minted, and th
 records the rename in `rename_history` with the caller's plan reference in `plan_ref`. Split-scan
 merging and bundle splitting still apply (the merged or split output lands beside the original), and
 the original rests in the caller's archive area rather than a run's `_Archive/`. In-place mode never
-touches a file outside the list it was given.
+touches a file outside the list it was given. **The caller also hands over the folder's settled
+answers** — the rulebook's alias list, its language and naming rule, and its per-domain sensitivity
+depths — so a folder that has already answered "who is this" and "how deep for health" is not asked
+again, and the redaction guard applies the owner's depths rather than the default.
 
 The reference implementation is family-ai-os's `preprocess` engine (dashboard-triggered, chunked
 LLM calls under a context budget with parallel chunk reads and strictly ordered applies, on-device

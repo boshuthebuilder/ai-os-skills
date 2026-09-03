@@ -65,6 +65,14 @@ Anything you cannot place with confidence is a **`needs_a_look`**, not a guessed
 - **Every escalation is decidable in one step.** Each `needs_a_look` carries a `what_would_resolve` —
   one sentence naming the single decision that closes it — and, where you can name it, the
   `proposed_action` you would take on a yes. A bare "please check this" is not an escalation.
+- **One concern is one item, however many files carry it.** An unfamiliar party, an unrecognised
+  account, a folder whose purpose you cannot tell — ask once, key the item on that subject, and list
+  the files as its evidence. Forty items with one answer between them buries the findings that
+  differ. You see the whole audit at once, so you are the step that can tell a repeated question
+  from a real one.
+- **Classify with the vocabulary, explain in the reason.** Each `needs_a_look` carries a `look`
+  class; yours to choose are `misfiled` and `credentials` — every other class in the vocabulary is
+  computed by the audit and already on the entry. Use its class, never a new phrase for it.
 - **Do not re-raise a known item.** The gather report's `previously_raised` ledger lists what has
   already been surfaced, each with a status: **open** and **dismissed** items you must not repeat —
   reference them instead; a **recently-resolved** item you may reopen only if its evidence has since
@@ -80,7 +88,7 @@ Return JSON only:
   "verdict": "propose | skip",
   "move_plan": [{"seq": 1, "domain": "...", "depth": "light", "action": "move", "from": "...", "to": "...", "evidence": "<sha256>", "reason": "...", "kind": "", "sweep": "", "needs_a_look": ""}],
   "later_rounds": [{"depth": "medium", "summary": "one line — what a deeper round would resolve"}],
-  "needs_a_look": [{"item": "...", "reason": "...", "owner_action": "null, OR one sentence naming the act only the owner can perform", "what_would_resolve": "one sentence — the single decision that closes this", "proposed_action": "optional — what you would do on a yes"}],
+  "needs_a_look": [{"item": "...", "look": "misfiled | credentials", "evidence": ["<sha256>", "..."], "reason": "...", "owner_action": "null, OR one sentence naming the act only the owner can perform", "what_would_resolve": "one sentence — the single decision that closes this", "proposed_action": "optional — what you would do on a yes"}],
   "log_entry": "## [{date}] curate | ..."
 }
 ```

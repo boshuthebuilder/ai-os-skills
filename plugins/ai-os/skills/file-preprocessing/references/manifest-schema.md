@@ -40,6 +40,7 @@ a `/1` file treats every added field as absent. The schema string is
 | `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null}` |
 | `connections` | list | `{to: <sha256 of a related entry>, relation: <why>}` — real relationships only, recorded on BOTH entries (an invoice's entry names the receipt exactly as the receipt's names the invoice) |
 | `flags` | list of strings | named states, see below |
+| `look` | string, optional | the **class** of the concern, from the closed vocabulary below. Present on every entry that landed under `Needs a look/` — including the computed classes, which carry their own flag rather than `needs_a_look` — and absent when the entry needs no look at all |
 | `look_reason` | string, optional | why this file needs a human decision, in the flagger's own words; absence ≡ `""` (every pre-v4 entry lacks it — consumers must treat missing as "no reason") |
 | `merged_from` | list, optional | on a merged split-scan document: the two source halves' sha256 ids |
 | `merged_into` | string, optional | on an archived split-scan half: the merged entry's sha256 id |
@@ -65,6 +66,7 @@ a `/1` file treats every added field as absent. The schema string is
 | `overlap` | string, optional | the overlap pair id this file's folder participates in (the audit's *Overlapping homes*) |
 | `generic_name` | bool, optional | the stem is a device or scanner default |
 | `plan_ref` | string, optional | `plans/<date>/move-plan.csv#<seq>` of the last approved row that touched this entry |
+| `convert_candidate` | object, optional | on an `unconverted` entry, the export the audit believes is this file's: `{path, match}` — `match` being `stem` (identical normalised stem), `stem_near` (normalised stem plus a modifier like "final"), or `none`. Absent means no candidate was found |
 
 **Duplicates do not mint entries.** Copies of the same bytes share one hash, so they share one key
 and one entry — the `/1` rule that a copy gets no entry of its own, unchanged. A duplicate group
@@ -83,8 +85,8 @@ half of a merged split scan, resting in the run's `_Archive/`) · `partial_read`
 of the document was read under the old page cap — no longer produced, still recognised) ·
 `undated` (no trustworthy document date) · `unknown_party` (party fell back to `Unknown`) ·
 `departed` (the file is no longer anywhere in the folder; the entry is history, never deleted) ·
-`needs_a_look` (a human decision is wanted — always accompanied by a non-empty `look_reason`) ·
-`archived_original` (the sideways original of a straightened scan, resting in the run's
+`needs_a_look` (a human decision is wanted — always accompanied by a `look` class and a non-empty
+`look_reason`) · `archived_original` (the sideways original of a straightened scan, resting in the run's
 `_Archive/`; `rotated_into` names the upright copy, whose own entry carries `rotated_from` back) ·
 `archived_bundle` (a multi-document file split into its parts, resting in the run's `_Archive/`;
 `split_into` names the parts, whose own entries carry `split_from` back).
@@ -96,10 +98,38 @@ document's entry id is still the merged file's own SHA-256 (the hash contract is
 identical bytes twice.
 
 **Added in /2:** `root_stray` · `unconverted` (an `iwork` or other proprietary file with no
-converted sibling yet) · `hygiene` (a name defect; the defect kind goes in `look_reason`). Same rule
-as before: consumers ignore flags they don't know. All three describe the entry's path — on an entry
-that has a `copies` list they describe its canonical one; the other copies are described by their
-own `kind`, not by a flag.
+converted export yet — the match rule is the `folder-curation` skill's, and the candidate export it
+found, or did not, is recorded in `convert_candidate`) · `hygiene` (a name defect; the defect kind
+goes in `look_reason`). Same rule as before: consumers ignore flags they don't know. All three
+describe the entry's path — on an entry that has a `copies` list they describe its canonical one;
+the other copies are described by their own `kind`, not by a flag.
+
+## The `look` vocabulary
+
+`look` is the **class** of a concern; `look_reason` is its explanation. The split exists because two
+readers need different things: the engine routes on the class (a folder, a section, a count), and a
+person reads the reason. Keep the class closed and the reason free, never the reverse — a class
+carried in prose has to be recovered by keyword-matching a sentence a model wrote, and two files
+with the same defect then land in different places because the wording drifted.
+
+**Producer `file-preprocessing`:** `unrecognisable` · `no_date` · `too_large` · `flagged`. The first
+three are the engine's own verdicts — computed from what extraction returned and which rung of the
+read ladder was reached — and correspond one-to-one with the `Needs a look/<Reason>/` folders. Only
+`flagged` is a model's to choose, and it always carries a non-empty `look_reason`.
+
+**Producer `folder-curation`:** `misfiled` · `duplicate_redundant` · `overlapping_home` ·
+`generic_name` · `unconverted` · `hygiene` · `unreadable` · `root_stray` · `credentials`. All but
+`misfiled` and `credentials` are computed by the audit walk; those two belong to the `curate` step,
+with `look_reason` saying what it saw.
+
+**A computed class is never model-selected**, in either producer. A class the engine can derive is
+derived — offering it to a model as a choice reintroduces exactly the drift a closed vocabulary
+removes, and makes an audit's counts a function of phrasing.
+
+The vocabulary is **extensible the way flags are**: a consumer ignores a `look` value it does not
+know rather than failing, and reads an unknown class as "needs a look, class unrecognised" — never
+as no look at all. A missing `look` on an entry flagged `needs_a_look` is an entry written before
+the field existed: read it as `flagged`.
 
 ## Consumer rules
 
@@ -108,6 +138,13 @@ own `kind`, not by a flag.
 - Never delete an entry; `departed` marks absence.
 - When writing, preserve identity fields you didn't re-derive (`first_seen`, `rename_history`,
   `original_name`), write atomically, and bump `generated_at`.
+- **Free text passes the redaction guard before it is written, not before it is rendered.** `title`,
+  `summary`, `detail`, `key_facts` and `look_reason` come from a model that has just read the
+  document, and this file is the source of truth *and* travels with the parcel — a number scrubbed
+  only in `AUDIT.md` is a number the manifest still hands to whoever opens it next. The
+  `reference_numbers` list is the typed exception: it is a field the schema wants populated, so it
+  passes at the depth the folder declared rather than being scrubbed blind. The framework rule and the
+  guard's four properties are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
 - `AUDIT.md` is derived; regenerate it from the manifest rather than editing it.
 
 ## Shared contracts

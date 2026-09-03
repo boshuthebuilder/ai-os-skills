@@ -26,8 +26,13 @@ Per entry, on top of the scan contract's own fields:
   name and by duplicate groups spanning two trees. Recorded as a pair id on every participating
   entry (`overlap`), with the file count on each side.
 - **Generic names** — a stem that is a device or scanner default (`generic_name`), counted per folder.
-- **Unconverted formats** — an `iwork` or other proprietary file with no converted sibling
-  (`unconverted`), counted per class and per folder, never per run.
+- **Unconverted formats** — an `iwork` or other proprietary file with no converted export
+  (`unconverted`), counted per class and per folder, never per run. The match is on the **normalised
+  stem across the whole folder**, not the same-folder sibling: exports live one folder over and under
+  modified names, and a false `unconverted` becomes a `convert` row that makes a second export. The
+  candidate found, and how it matched, is recorded on the entry (`convert_candidate`) so the plan can
+  name it. The comparison stays on names and timestamps — a content-level match would mean opening
+  the format the class policy says cannot be opened, and this pass makes no model call.
 - **Hygiene defects** (`hygiene`, kind in `look_reason`) — leading/trailing whitespace in a name,
   hidden system files, names differing only by case, path components over the filesystem's byte limit.
 - **Root strays** (`root_stray`) — anything at the folder root that is not a declared reserved name.
@@ -52,7 +57,11 @@ never from the clock**, so re-rendering an unchanged manifest is a no-op. Sectio
 8. **Hygiene**
 9. **Live vs closed** — per top-level folder
 10. **Drift since last pass** — omitted only on the first pass, which says so
-11. **Needs a look** — findings a person must judge, each with its reason
+11. **Needs a look** — findings a person must judge, each with its **class** (the closed `look`
+    vocabulary in the manifest reference) and its reason. Every class this pass emits is *computed*;
+    a class is never inferred from a phrase, and the section is grouped by class so its counts do not
+    depend on wording. One concern is one finding: a condition that holds for forty files is one
+    entry with forty pieces of evidence, not forty entries.
 
 **Every section prints its count, including zero.** A sweep that saw nothing and a healthy folder
 must never read alike; a section that renders nothing at all is indistinguishable from a section that
