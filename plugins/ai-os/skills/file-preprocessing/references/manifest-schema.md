@@ -120,10 +120,12 @@ ladder was reached; only `flagged` is a model's to choose, and it always carries
 `look_reason`.
 
 **Producer `folder-curation`:** `misfiled` · `credentials` · `flagged`, all three the `curate`
-step's judgements, with `look_reason` saying what it saw. These classify the items in **`curate`'s
-move-plan**, not entries in this file: in that archetype the manifest is written only by the
-deterministic `audit`, which makes no model call, and `curate` writes only the plan — so a `look` on
-a manifest *entry* is `file-preprocessing`'s alone. The audit's **computed** findings are not in
+step's judgements, explained by the item's own `reason` (that output's field name; `look_reason` is
+this file's). They classify the **escalation items** `curate` returns in its `needs_a_look` array —
+the ones that feed the raised-item ledger — and *not* rows in `move-plan.csv`, whose `needs_a_look`
+column is free text saying why a row wants judgement rather than a class. Nor do they reach a
+manifest entry: in that archetype the manifest is written only by the deterministic `audit`, which
+makes no model call, so a `look` on an *entry* is `file-preprocessing`'s alone. The audit's **computed** findings are not in
 this field either: a curated file routinely has several at once (a root stray that is also
 generically named), and they are already carried by the flags and fields the walk sets
 (`root_stray`, `generic_name`, `unconverted`, `hygiene`, `overlap`, `copies[].kind`). Its *Needs a
@@ -146,11 +148,15 @@ the field existed: read it as `flagged`.
 - Never delete an entry; `departed` marks absence.
 - When writing, preserve identity fields you didn't re-derive (`first_seen`, `rename_history`,
   `original_name`), write atomically, and bump `generated_at`.
-- **`convert_candidate` is derived but sticky.** Carry the previous pass's value forward and
-  re-confirm it by `id`: if that content is still in the folder, the pairing holds whatever either
-  file is now called. Only when the id is gone does the stem search run again. A pairing recomputed
-  from names alone is undone by the first descriptive rename — including the ones this system's own
-  medium-depth curation performs — and the file is re-flagged `unconverted` for ever after.
+- **A `stem` pairing is sticky; a `stem_near` one is provisional.** Carry the previous pass's
+  `convert_candidate` forward and re-confirm it by `id`: for a **confident** (`stem`) pairing, that
+  is the whole check — if the content is still in the folder the pairing holds whatever either file
+  is now called, which is what stops the first descriptive rename (including the ones this system's
+  own medium-depth curation performs) from re-flagging a converted file for ever. A **weak**
+  (`stem_near`) pairing is different: the entry is still `unconverted`, so the search **runs again
+  every pass** and a real export appearing later upgrades the pairing. Skipping the search while a
+  weak candidate survives is the trap — the owner exports `Report.pdf` in answer to the flag, the
+  stale `Report draft.pdf` is still present, and the flag never clears.
 - **Every free-text field a model produced is guarded before it is written — the list is the whole
   list.** `title`, `summary`, `key_facts`, `look_reason`, `parties` and each `connections[].relation`
   come from a model that has just read the document, and this file is the source of truth *and*
@@ -159,9 +165,12 @@ the field existed: read it as `flagged`.
   a model most naturally qualifies ("… — account 12345678"), so name them explicitly rather than
   relying on "the free-text fields". The `reference_numbers` list is the typed exception: it is a
   field the schema wants populated, so it passes at the depth the folder declared rather than being
-  scrubbed blind. Fields a producer only *derives* from (a filename part like `detail`) are guarded
-  at the same crossing even though they never land here — see the framework rule and the guard's
-  four properties in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
+  scrubbed blind. Two kinds of model text never land in this file and are guarded at the same
+  crossing regardless — what a producer only *derives* from (a filename part like `detail`), and
+  what it emits **past** the manifest into a raised-item ledger (an escalation's `item`, `reason`,
+  `what_would_resolve`, `proposed_action`). The ledger is read by people and by later runs; a number
+  that reaches it has left the system just as surely. See the framework rule and the guard's four
+  properties in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
 - `AUDIT.md` is derived; regenerate it from the manifest rather than editing it.
 
 ## Shared contracts

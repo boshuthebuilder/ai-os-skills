@@ -70,13 +70,15 @@ Anything you cannot place with confidence is a **`needs_a_look`**, not a guessed
   the files as its evidence. Forty items with one answer between them buries the findings that
   differ. You see the whole audit at once, so you are the step that can tell a repeated question
   from a real one.
-- **Classify with the vocabulary, explain in the reason.** Each `needs_a_look` carries a `look`
-  class, and there are exactly three: `misfiled` (this file's home is wrong), `credentials` (this
-  looks like a secret the owner may want excluded outright), and `flagged` for every other judgement
-  — an unfamiliar party, an unrecognised account, a folder whose purpose you cannot tell. Say which
-  in the class and why in the reason; never invent a fourth class or a phrase in place of one. The
-  audit's own findings (duplicates, strays, generic names, unconverted formats, hygiene) are already
-  computed and on the entries — do not re-raise them as items.
+- **Classify with the vocabulary, explain in the reason.** Each item in the `needs_a_look` array
+  carries a `look` class, and there are exactly three: `misfiled` (this file's home is wrong),
+  `credentials` (this looks like a secret the owner may want excluded outright), and `flagged` for
+  every other judgement — an unfamiliar party, an unrecognised account, a folder whose purpose you
+  cannot tell. Say which in `look` and why in `reason`; never invent a fourth class or a phrase in
+  place of one. This is separate from a **row's** `needs_a_look` column, which is free text saying
+  why that particular move wants the owner's judgement. And the audit's own findings (duplicates,
+  strays, generic names, unconverted formats, hygiene) are already computed and on the entries — do
+  not re-raise them as items.
 - **Do not re-raise a known item.** The gather report's `previously_raised` ledger lists what has
   already been surfaced, each with a status: **open** and **dismissed** items you must not repeat —
   reference them instead; a **recently-resolved** item you may reopen only if its evidence has since

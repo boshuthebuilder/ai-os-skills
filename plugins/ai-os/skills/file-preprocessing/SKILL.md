@@ -179,7 +179,8 @@ failed". Two consequences:
 
 ## The method
 
-Work through these steps; every step except **Understand** is deterministic.
+Work through these steps. Three are model calls — the whole-batch **planning** call, **Understand**,
+and **Reduce**; every other step is deterministic.
 
 1. **Scan.** Walk the whole folder as the manifest reference's **scan contract** defines it (hash
    every file; confirm each entry is still at its recorded path; adopt human moves; spot edited
@@ -276,7 +277,7 @@ Work through these steps; every step except **Understand** is deterministic.
    the merge contract — parts carry `split_from`, the bundle archives to the run's `_Archive/`
    with `split_into` + the `archived_bundle` flag, and ONLY once every part's own move has
    landed. Keep part names concise ("PAYE Statutory Payment Repayment"), never an inventory.
-6. **Understand** (the only non-deterministic step). For each readable candidate, decide: `party`,
+6. **Understand** (a model call, one of the three). For each readable candidate, decide: `party`,
    `doc_type` (short English type), `doc_date` (from the document's own content, ISO, never
    invented), `detail`, `title`, a rich 2–3 sentence `summary`, `key_facts` (dates, amounts,
    reference numbers actually read), `parties`, `category`, `connections` (real relationships to
@@ -340,12 +341,15 @@ Work through these steps; every step except **Understand** is deterministic.
    framework rule is in [`ARCHITECTURE.md`](../../ARCHITECTURE.md)).
 8. **Guard the answers — once, where they cross into the deterministic side.** Every free-text
    field the reasoning steps returned passes the deterministic redaction guard **here**, before any
-   of them is used to name a file, move it, write an entry or render a view. That is the whole set,
-   named rather than gestured at: the fields that reach the manifest (`title`, `summary`,
-   `key_facts`, `look_reason`, `parties`, and each `connections[].relation` the reduce pass wrote)
-   *and* the ones only a filename is derived from (`party`, `doc_type`, `detail`). `parties` and
-   `relation` are the two a guard written from memory omits, and the two a model most naturally
-   qualifies with the number it just read ("… — account 12345678"). Placing it at the manifest
+   of them is used to name a file, move it, write an entry, raise an item or render a view. That is
+   the whole set, named rather than gestured at: the fields that reach the manifest (`title`,
+   `summary`, `key_facts`, `look_reason`, `parties`, and each `connections[].relation` the reduce
+   pass wrote), the ones only a filename is derived from (`party`, `doc_type`, `detail`), and the
+   text of any item the run **raises** (`item`, `reason`, `what_would_resolve`, `proposed_action`) —
+   an escalation about an unrecognised account is precisely where a model repeats the account
+   number, and the ledger it lands in is read by people and by later runs. `parties`, `relation` and
+   the raised text are the three a guard written from memory omits, and the three a model most
+   naturally qualifies with the number it just read ("… — account 12345678"). Placing it at the manifest
    write would be too late: the very next step builds the filename out of `party` and `detail`, and
    a full account number a model put in `detail` would already be on the filesystem — in the name,
    in `current_path`, and in `rename_history` — before any guard saw it. One crossing, one guard,

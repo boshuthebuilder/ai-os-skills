@@ -20,8 +20,10 @@ itself.
   and outright exclusion enforced by the gate rather than the guard. The guarded set is *named*
   rather than gestured at — `parties` and each `connections[].relation` included, being the two a
   guard written from memory omits and the two a model most naturally qualifies with the number it
-  just read. The chain from the curation interview's answer to the enforcement point is stated end
-  to end; the four prompt templates that carried the rule now point at it instead of only asserting
+  just read, alongside the text of anything the run *raises* (an escalation about an unrecognised
+  account is exactly where a model repeats the account number, and the ledger it lands in is read by
+  people and by later runs). The chain from the curation interview's answer to the enforcement point
+  is stated end to end; the four prompt templates that carried the rule now point at it instead of only asserting
   it.
 - **A chunked reasoning step's answers are reconciled before any is applied** (`ARCHITECTURE.md`,
   `file-preprocessing`): near-identical inputs are where a model returns one answer for two files or
@@ -41,9 +43,10 @@ itself.
   are never model-selected, and never duplicated into `look` either — `file-preprocessing` leaves
   the model only `flagged` (its other three classes are the engine's verdicts, and a file lands in
   exactly one look folder), while `folder-curation` keeps `look` for its three judgements —
-  `misfiled`, `credentials`, `flagged` — classifying items in `curate`'s move-plan rather than
-  manifest entries, since only its deterministic `audit` writes the manifest. Curation's computed
-  findings co-occur on one file and stay on the flags and fields the walk already sets.
+  `misfiled`, `credentials`, `flagged` — classifying the escalations `curate` returns (the ones
+  that feed the raised-item ledger), not `move-plan.csv` rows and not manifest entries, since only
+  its deterministic `audit` writes the manifest. Curation's computed findings co-occur on one file
+  and stay on the flags and fields the walk already sets.
 - **The read ladder is a cost ladder, and a rung is checked against the material's languages**
   (`file-preprocessing`): descend only as far as a file needs, record the tier each file was read
   at, and treat an empty extraction from a file that should have text as a **capability gap to
@@ -56,15 +59,20 @@ itself.
   `unconverted` becomes a `convert` row that makes a second export. Match *strength* now decides the
   flag — an identical normalised stem clears it, a stem that agrees only after a modifier is folded
   out leaves it set with the candidate named so a `convert` row points at what it doubts, and no
-  match leaves it set with no candidate. The pairing is recorded and re-confirmed by the export's
-  **content id**: the audit recomputes from disk each run, so a pairing held by name dies at the
-  first descriptive rename — including the ones medium-depth curation itself performs. The match
-  stays deterministic (stems and timestamps): a content-level comparison would mean opening the
-  format the class policy says cannot be opened.
+  match leaves it set with no candidate. A *confident* pairing is recorded and re-confirmed by the
+  export's **content id**, so it survives the first descriptive rename — including the ones
+  medium-depth curation itself performs; a *weak* one stays provisional and re-searches every pass,
+  so the export the owner makes in answer to the flag is actually found. Candidates rank by same
+  folder → nearest common ancestor → closest mtime, and an export is claimed once, so a single
+  recent export cannot clear the flag across every year of an archive that shares its stem. The
+  match stays deterministic: a content-level comparison would mean opening the format the class
+  policy says cannot be opened.
 
 `extraction` gains an optional `tier`, naming the rung of the read ladder that produced the text so
 a run's spend can be attributed — `none` when no rung produced any, which is an outcome to count
-rather than an absence.
+rather than an absence. `file-preprocessing` also stops claiming Understand is its only
+non-deterministic step: the whole-batch planning call and reduce are model calls too, and the guard
+step is written against all three.
 
 Additive throughout: no skill renamed or removed, no placeholder introduced or made required. The
 new `look` and `convert_candidate` fields are optional, and the `look` vocabulary is extensible the

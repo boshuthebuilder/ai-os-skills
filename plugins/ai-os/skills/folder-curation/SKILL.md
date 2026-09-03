@@ -111,18 +111,32 @@ moves, spot edited files and strays, flag departed entries), then compute what a
   against `X.pdf` in the same folder therefore reports as unconverted a document that was converted
   years ago — and the plan's answer to that is a `convert` row that makes a *second* export. So
   match on the **normalised stem across the whole folder** (case, punctuation, whitespace and a
-  short modifier list folded out), break ties by modification time, and let the strength of the
-  match decide the flag:
+  short modifier list folded out), and let the strength of the match decide the flag. Two
+  constraints keep "the whole folder" from over-reaching, and an archive of yearly folders is what
+  needs them — `2022/Statement.numbers`, `2023/Statement.numbers` and one `2024/Statement.pdf` all
+  share a stem:
+  - **Nearest wins, and the order is fixed**: same folder, then the nearest common ancestor
+    (fewest directory hops), then — only among candidates equally near — the one whose modification
+    time is closest to the proprietary file's. A rule that says merely "break ties by mtime" leaves
+    the direction to the implementer, and two conforming engines then disagree.
+  - **An export is claimed once.** One export cannot convert three files; it pairs with the nearest
+    claimant and the rest keep their `unconverted` flag. Without this, a single 2024 export clears
+    the flag on every year in the archive and silently suppresses the rows that were right.
+
+  With those, the flag falls out of the match:
   - a **confident** match (the normalised stems are identical) means the file *is* converted:
     **no `unconverted` flag**, and the pairing recorded on the entry (`convert_candidate`,
     `match: stem`). Record it by the export's **content id**, not its path, and re-confirm it by
-    that id on every later pass: the audit recomputes from disk each run, so a pairing held by name
-    is undone by the first descriptive rename — including the ones this skill's own medium depth
-    performs through `file-preprocessing` — and the file is re-flagged `unconverted` for ever after,
-    proposing an export that already exists;
+    that id on every later pass — that is the whole check, no search: the audit recomputes from disk
+    each run, so a pairing held by name is undone by the first descriptive rename — including the
+    ones this skill's own medium depth performs through `file-preprocessing` — and the file is
+    re-flagged `unconverted` for ever after, proposing an export that already exists;
   - a **weak** match (the stems agree only after a modifier is folded out) stays `unconverted`, but
     with the candidate named — a `convert` row must point at the file it believes is not the export,
-    so the owner declines in one look instead of re-deriving the question;
+    so the owner declines in one look instead of re-deriving the question. A weak pairing is
+    **provisional, never sticky**: the search runs again every pass, because the owner's usual
+    answer to the flag is to make the real export, and a rule that stops searching while the old
+    near-miss survives would leave the flag up for ever;
   - **no** match at all is `unconverted` with no `convert_candidate`: the plain case the flag was
     always for.
 
@@ -146,8 +160,10 @@ audit's own findings are **computed, never chosen by a model**, and they are car
 and fields the walk already sets — `root_stray`, `generic_name`, `unconverted`, `hygiene`,
 `overlap`, `copies[].kind` — which is also why a file can hold several at once without anything
 having to choose between them. The `look` classes are `curate`'s three *judgements* — `misfiled`,
-`credentials`, `flagged` — and they classify items in its move-plan, not entries in the manifest,
-which only the deterministic `audit` writes here. The vocabulary and its extension rule are in
+`credentials`, `flagged` — and they classify the **escalations** it returns, the ones that feed the
+raised-item ledger; not the rows of `move-plan.csv` (whose own `needs_a_look` column is free text
+saying why a row wants judgement), and not manifest entries, which only the deterministic `audit`
+writes here. The vocabulary and its extension rule are in
 [`manifest-schema.md`](../file-preprocessing/references/manifest-schema.md).
 
 Render `AUDIT.md` from the manifest as a pure function of the manifest (no clock; stamped from the
