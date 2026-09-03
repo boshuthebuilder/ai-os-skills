@@ -38,8 +38,11 @@ Per entry, on top of the scan contract's own fields:
   folded out leaves it set *with* the candidate named, and no match at all leaves it set with no
   candidate. A **confident** pairing is carried forward and re-confirmed by the export's **content
   id** rather than its name — this pass recomputes from disk every run, so a pairing held by name
-  dies at the first rename and the file is re-flagged for ever. A **weak** pairing is provisional:
-  re-run the search every pass, so the export the owner makes in answer to the flag is found. The comparison stays on names and timestamps: a content-level
+  dies at the first rename and the file is re-flagged for ever. That re-confirmation is a shortcut
+  past the search, not a replacement: when the recorded id is no longer in the folder — the ordinary
+  re-export gives the export new bytes — the search runs again. A **weak** pairing is provisional
+  either way: re-run the search every pass, so the export the owner makes in answer to the flag is
+  found. The comparison stays on names and timestamps: a content-level
   match would mean opening the format the class policy says cannot be opened, and this pass makes no
   model call.
 - **Hygiene defects** (`hygiene`, kind in `look_reason`) — leading/trailing whitespace in a name,

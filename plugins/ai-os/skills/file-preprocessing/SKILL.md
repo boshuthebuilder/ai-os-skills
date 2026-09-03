@@ -343,9 +343,12 @@ and **Reduce**; every other step is deterministic.
    field the reasoning steps returned passes the deterministic redaction guard **here**, before any
    of them is used to name a file, move it, write an entry, raise an item or render a view. That is
    the whole set, named rather than gestured at: the fields that reach the manifest (`title`,
-   `summary`, `key_facts`, `look_reason`, `parties`, and each `connections[].relation` the reduce
-   pass wrote), the ones only a filename is derived from (`party`, `doc_type`, `detail`), and the
-   text of any item the run **raises** (`item`, `reason`, `what_would_resolve`, `proposed_action`) —
+   `summary`, `key_facts`, `look_reason`, `parties`, and every `connections[].relation` — whoever
+   wrote it, the understanding pass or the reduce pass that revised it, since reduce is advisory and
+   a failed one leaves the groups' own relations standing), the ones only a filename is derived from
+   (`party`, `doc_type`, `detail`), and the text of any item the run **raises** (`item`, `reason`,
+   `what_would_resolve`, `owner_action`, `proposed_action` — `owner_action` above all, since naming
+   which account to go and find is exactly what it is for) —
    an escalation about an unrecognised account is precisely where a model repeats the account
    number, and the ledger it lands in is read by people and by later runs. `parties`, `relation` and
    the raised text are the three a guard written from memory omits, and the three a model most

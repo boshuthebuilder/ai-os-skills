@@ -127,7 +127,10 @@ moves, spot edited files and strays, flag departed entries), then compute what a
   - a **confident** match (the normalised stems are identical) means the file *is* converted:
     **no `unconverted` flag**, and the pairing recorded on the entry (`convert_candidate`,
     `match: stem`). Record it by the export's **content id**, not its path, and re-confirm it by
-    that id on every later pass — that is the whole check, no search: the audit recomputes from disk
+    that id on every later pass — a shortcut past the search, not a replacement for it: if that
+    content has left the folder (the ordinary re-export, where the owner edits the document and
+    exports again, giving the export new bytes and a new id) the search simply runs again. The
+    shortcut earns its place because the audit recomputes from disk
     each run, so a pairing held by name is undone by the first descriptive rename — including the
     ones this skill's own medium depth performs through `file-preprocessing` — and the file is
     re-flagged `unconverted` for ever after, proposing an export that already exists;

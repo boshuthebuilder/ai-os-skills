@@ -40,7 +40,7 @@ a `/1` file treats every added field as absent. The schema string is
 | `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null, tier: string|null}` — `tier` names the rung of the read ladder that actually produced the text (`text_layer`, `local_ocr`, `vision`, `speech`, or a rung the deployment adds), so a run's spend can be attributed. `none` when no rung produced any — the entry is `unreadable` or `too_large` — which is a real outcome to count, not an absence. `null` means only "written before this field existed"; it is never a silent default for a read that happened |
 | `connections` | list | `{to: <sha256 of a related entry>, relation: <why>}` — real relationships only, recorded on BOTH entries (an invoice's entry names the receipt exactly as the receipt's names the invoice) |
 | `flags` | list of strings | named states, see below |
-| `look` | string, optional | the **class** of the single concern that makes this entry a human's decision, from the producer's closed vocabulary below. At most one — a class the walk can compute is carried by its own flag or field, never duplicated here, so an entry with several computed defects still has at most one `look`. Absent when the entry raises no decision |
+| `look` | string, optional | the **class** of the single concern that makes this entry a human's decision — for `file-preprocessing`, the placement class of the `Needs a look/` folder it landed in (`unrecognisable`, `no_date`, `too_large`, `flagged`). At most one, because a file lands in one folder. Absent when the entry raises no decision. Which producer writes this field, and what a producer that does *not* does instead, is in the vocabulary section below |
 | `look_reason` | string, optional | why this file needs a human decision, in the flagger's own words; absence ≡ `""` (every pre-v4 entry lacks it — consumers must treat missing as "no reason") |
 | `merged_from` | list, optional | on a merged split-scan document: the two source halves' sha256 ids |
 | `merged_into` | string, optional | on an archived split-scan half: the merged entry's sha256 id |
@@ -85,8 +85,9 @@ half of a merged split scan, resting in the run's `_Archive/`) · `partial_read`
 of the document was read under the old page cap — no longer produced, still recognised) ·
 `undated` (no trustworthy document date) · `unknown_party` (party fell back to `Unknown`) ·
 `departed` (the file is no longer anywhere in the folder; the entry is history, never deleted) ·
-`needs_a_look` (a human decision is wanted — always accompanied by a `look` class and a non-empty
-`look_reason`) · `archived_original` (the sideways original of a straightened scan, resting in the run's
+`needs_a_look` (a human decision is wanted — always accompanied by a `look` class, and by a
+non-empty `look_reason` when that class is `flagged`; the computed classes are self-explaining, the
+folder being the reason) · `archived_original` (the sideways original of a straightened scan, resting in the run's
 `_Archive/`; `rotated_into` names the upright copy, whose own entry carries `rotated_from` back) ·
 `archived_bundle` (a multi-document file split into its parts, resting in the run's `_Archive/`;
 `split_into` names the parts, whose own entries carry `split_from` back).
@@ -154,13 +155,17 @@ the field existed: read it as `flagged`.
   is now called, which is what stops the first descriptive rename (including the ones this system's
   own medium-depth curation performs) from re-flagging a converted file for ever. A **weak**
   (`stem_near`) pairing is different: the entry is still `unconverted`, so the search **runs again
-  every pass** and a real export appearing later upgrades the pairing. Skipping the search while a
+  every pass** and a real export appearing later upgrades the pairing. And a confident pairing whose
+  `id` is **no longer in the folder** falls back to the search too — that is the ordinary re-export
+  (the owner edits the document and exports again, so the export's content, and therefore its id,
+  changes). Re-confirmation is a shortcut past the search, never a replacement for it. Skipping the search while a
   weak candidate survives is the trap — the owner exports `Report.pdf` in answer to the flag, the
   stale `Report draft.pdf` is still present, and the flag never clears.
 - **Every free-text field a model produced is guarded before it is written — the list is the whole
   list.** `title`, `summary`, `key_facts`, `look_reason`, `parties` and each `connections[].relation`
-  come from a model that has just read the document, and this file is the source of truth *and*
-  travels with the parcel — a number scrubbed only in `AUDIT.md` is a number the manifest still
+  come from a model that has just read the document — `connections[].relation` whoever wrote it,
+  the understanding pass or the reduce pass that revised it — and this file is the source of truth
+  *and* travels with the parcel — a number scrubbed only in `AUDIT.md` is a number the manifest still
   hands to whoever opens it next. `parties` and `relation` are the easy ones to forget and the ones
   a model most naturally qualifies ("… — account 12345678"), so name them explicitly rather than
   relying on "the free-text fields". The `reference_numbers` list is the typed exception: it is a
@@ -168,7 +173,9 @@ the field existed: read it as `flagged`.
   scrubbed blind. Two kinds of model text never land in this file and are guarded at the same
   crossing regardless — what a producer only *derives* from (a filename part like `detail`), and
   what it emits **past** the manifest into a raised-item ledger (an escalation's `item`, `reason`,
-  `what_would_resolve`, `proposed_action`). The ledger is read by people and by later runs; a number
+  `what_would_resolve`, `owner_action`, `proposed_action` — `owner_action` included, and it is the
+  one most likely to name an identifier, since it tells a person which account or document to go
+  and find). The ledger is read by people and by later runs; a number
   that reaches it has left the system just as surely. See the framework rule and the guard's four
   properties in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
 - `AUDIT.md` is derived; regenerate it from the manifest rather than editing it.

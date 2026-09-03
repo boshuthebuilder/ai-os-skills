@@ -181,8 +181,8 @@ deterministically at the boundary; the prompt templates are written to trust tho
 Two contracts in this framework are stated to the model as instructions — *record identifiers as the
 last 4 digits only*, and *never read what the sensitivity decision excluded*. A model asked not to
 quote a number quotes it anyway often enough to matter, and it is holding the document that contains
-it. So both are **write-time guards**, and the prompt rule is the first of two lines of defence, never
-the only one:
+it. So both are **crossing guards** — deterministic, and placed where a model's answers enter the
+system — and the prompt rule is the first of two lines of defence, never the only one:
 
 > Every free-text field a reasoning step returns passes a deterministic redaction guard **as it
 > crosses onto the deterministic side** — before any of it is used to name a file, write an entry or
@@ -214,7 +214,7 @@ Four properties keep the guard from becoming its own silent failure:
 
 The chain is one line, from decision to enforcement: the interview's sensitivity answers land in the
 folder's rulebook, the rulebook's exclusions and per-domain depths are compiled into the job config,
-and the guard applies the depths at the write. A depth recorded in prose and nowhere else is a
+and the guard applies the depths at the crossing. A depth recorded in prose and nowhere else is a
 preference, not a control.
 
 ## Consuming a pinned release

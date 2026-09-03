@@ -241,9 +241,9 @@ with no inline maintainer, the scheduled passes are the primary path.
   owner may override this: an explicit, dated decision recorded in the Schema (or the wiki's
   data-sensitivity page) is respected by every sweep from then on. A decided exception stops alerting;
   it never becomes a permanently re-raised flag. This rule is stated here because a pass should honour
-  it, **and enforced at the write** by the deployment's redaction guard — a model holding the document
-  quotes the number it was told not to often enough that the instruction cannot be the only line of
-  defence (see [`ARCHITECTURE.md`](../../ARCHITECTURE.md)).
+  it, **and enforced by the deployment's crossing guard** on everything a pass returns — a model
+  holding the document quotes the number it was told not to often enough that the instruction cannot
+  be the only line of defence (see [`ARCHITECTURE.md`](../../ARCHITECTURE.md)).
 - **Sensitivity has a depth as well as a mask.** The Schema may set a per-domain depth: `full`
   (default), `administration-only` (a legal matter: adviser, dates, invoices, next deadline, never
   the substance of advice), `dates-only` (health: appointments and "a report exists at <path>"). A

@@ -20,9 +20,9 @@ itself.
   and outright exclusion enforced by the gate rather than the guard. The guarded set is *named*
   rather than gestured at — `parties` and each `connections[].relation` included, being the two a
   guard written from memory omits and the two a model most naturally qualifies with the number it
-  just read, alongside the text of anything the run *raises* (an escalation about an unrecognised
-  account is exactly where a model repeats the account number, and the ledger it lands in is read by
-  people and by later runs). The chain from the curation interview's answer to the enforcement point
+  just read, alongside the text of anything the run *raises* — `owner_action` above all, since
+  naming which account to go and find is exactly what it is for, and the ledger it lands in is read
+  by people and by later runs. The chain from the curation interview's answer to the enforcement point
   is stated end to end; the four prompt templates that carried the rule now point at it instead of only asserting
   it.
 - **A chunked reasoning step's answers are reconciled before any is applied** (`ARCHITECTURE.md`,
