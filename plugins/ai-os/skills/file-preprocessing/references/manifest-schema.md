@@ -37,9 +37,10 @@ a `/1` file treats every added field as absent. The schema string is
 | `doc_date` | string or null | ISO date from the document's content; null when none was trustworthy |
 | `language` | string | primary language code (`en`, `zh`, …) |
 | `pages` | int or null | page count when known |
-| `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null}` |
+| `extraction` | object | how the text was obtained: `{ocr: bool, tesseract: bool, speech: bool, status: string|null, tier: string|null}` — `tier` names the rung of the read ladder that actually produced the text (`text_layer`, `local_ocr`, `vision`, `speech`, or a rung the deployment adds), so a run's spend can be attributed. `none` when no rung produced any — the entry is `unreadable` or `too_large` — which is a real outcome to count, not an absence. `null` means only "written before this field existed"; it is never a silent default for a read that happened |
 | `connections` | list | `{to: <sha256 of a related entry>, relation: <why>}` — real relationships only, recorded on BOTH entries (an invoice's entry names the receipt exactly as the receipt's names the invoice) |
 | `flags` | list of strings | named states, see below |
+| `look` | string, optional | the **class** of the single concern that makes this entry a human's decision — for `file-preprocessing`, the placement class of the `Needs a look/` folder it landed in (`unrecognisable`, `no_date`, `too_large`, `flagged`). At most one, because a file lands in one folder. Absent when the entry raises no decision. Which producer writes this field, and what a producer that does *not* does instead, is in the vocabulary section below |
 | `look_reason` | string, optional | why this file needs a human decision, in the flagger's own words; absence ≡ `""` (every pre-v4 entry lacks it — consumers must treat missing as "no reason") |
 | `merged_from` | list, optional | on a merged split-scan document: the two source halves' sha256 ids |
 | `merged_into` | string, optional | on an archived split-scan half: the merged entry's sha256 id |
@@ -65,6 +66,7 @@ a `/1` file treats every added field as absent. The schema string is
 | `overlap` | string, optional | the overlap pair id this file's folder participates in (the audit's *Overlapping homes*) |
 | `generic_name` | bool, optional | the stem is a device or scanner default |
 | `plan_ref` | string, optional | `plans/<date>/move-plan.csv#<seq>` of the last approved row that touched this entry |
+| `convert_candidate` | object, optional | on a proprietary-class entry, the export the audit found for it: `{id, path, match}`. `id` is the export's own sha256 and is the authority — the pairing is re-confirmed by it first, so renaming either file does not break it; `path` is where that content sat at the last scan. `match` is `stem` (identical normalised stem) or `stem_near` (normalised stem plus a modifier — "final", "signed", an appended date), and records how the pairing was *first* established. Absent means no candidate was found at all. A `stem` match means the file **is** converted, so the entry carries no `unconverted` flag; a `stem_near` match is `unconverted` *with* the candidate named, so a `convert` row can point at what it thinks is not the export |
 
 **Duplicates do not mint entries.** Copies of the same bytes share one hash, so they share one key
 and one entry — the `/1` rule that a copy gets no entry of its own, unchanged. A duplicate group
@@ -83,8 +85,9 @@ half of a merged split scan, resting in the run's `_Archive/`) · `partial_read`
 of the document was read under the old page cap — no longer produced, still recognised) ·
 `undated` (no trustworthy document date) · `unknown_party` (party fell back to `Unknown`) ·
 `departed` (the file is no longer anywhere in the folder; the entry is history, never deleted) ·
-`needs_a_look` (a human decision is wanted — always accompanied by a non-empty `look_reason`) ·
-`archived_original` (the sideways original of a straightened scan, resting in the run's
+`needs_a_look` (a human decision is wanted — always accompanied by a `look` class, and by a
+non-empty `look_reason` when that class is `flagged`; the computed classes are self-explaining, the
+folder being the reason) · `archived_original` (the sideways original of a straightened scan, resting in the run's
 `_Archive/`; `rotated_into` names the upright copy, whose own entry carries `rotated_from` back) ·
 `archived_bundle` (a multi-document file split into its parts, resting in the run's `_Archive/`;
 `split_into` names the parts, whose own entries carry `split_from` back).
@@ -95,11 +98,49 @@ document's entry id is still the merged file's own SHA-256 (the hash contract is
 — necessary because PDF writers embed creation metadata, so the same halves never merge to
 identical bytes twice.
 
-**Added in /2:** `root_stray` · `unconverted` (an `iwork` or other proprietary file with no
-converted sibling yet) · `hygiene` (a name defect; the defect kind goes in `look_reason`). Same rule
-as before: consumers ignore flags they don't know. All three describe the entry's path — on an entry
-that has a `copies` list they describe its canonical one; the other copies are described by their
-own `kind`, not by a flag.
+**Added in /2:** `root_stray` · `unconverted` (an `iwork` or other proprietary file for which no
+export could be confidently matched — the match rule is the `folder-curation` skill's; a confident
+match clears the flag, a weak one leaves it set with the candidate named in `convert_candidate`) ·
+`hygiene` (a name defect; the defect kind
+goes in `look_reason`). Same rule as before: consumers ignore flags they don't know. All three
+describe the entry's path — on an entry that has a `copies` list they describe its canonical one;
+the other copies are described by their own `kind`, not by a flag.
+
+## The `look` vocabulary
+
+`look` is the **class** of a concern; `look_reason` is its explanation. The split exists because two
+readers need different things: the engine routes on the class (a folder, a section, a count), and a
+person reads the reason. Keep the class closed and the reason free, never the reverse — a class
+carried in prose has to be recovered by keyword-matching a sentence a model wrote, and two files
+with the same defect then land in different places because the wording drifted.
+
+**Producer `file-preprocessing`:** `unrecognisable` · `no_date` · `too_large` · `flagged`. Exactly
+one applies, because the file lands in exactly one `Needs a look/<Reason>/` folder. The first three
+are the engine's own verdicts — computed from what extraction returned and which rung of the read
+ladder was reached; only `flagged` is a model's to choose, and it always carries a non-empty
+`look_reason`.
+
+**Producer `folder-curation`:** `misfiled` · `credentials` · `flagged`, all three the `curate`
+step's judgements, explained by the item's own `reason` (that output's field name; `look_reason` is
+this file's). They classify the **escalation items** `curate` returns in its `needs_a_look` array —
+the ones that feed the raised-item ledger — and *not* rows in `move-plan.csv`, whose `needs_a_look`
+column is free text saying why a row wants judgement rather than a class. Nor do they reach a
+manifest entry: in that archetype the manifest is written only by the deterministic `audit`, which
+makes no model call, so a `look` on an *entry* is `file-preprocessing`'s alone. The audit's **computed** findings are not in
+this field either: a curated file routinely has several at once (a root stray that is also
+generically named), and they are already carried by the flags and fields the walk sets
+(`root_stray`, `generic_name`, `unconverted`, `hygiene`, `overlap`, `copies[].kind`). Its *Needs a
+look* sections are grouped from those, not from a second encoding of them — one home per fact, and
+no cardinality to reconcile.
+
+**A computed class is never model-selected**, in either producer. A class the engine can derive is
+derived — offering it to a model as a choice reintroduces exactly the drift a closed vocabulary
+removes, and makes an audit's counts a function of phrasing.
+
+The vocabulary is **extensible the way flags are**: a consumer ignores a `look` value it does not
+know rather than failing, and reads an unknown class as "needs a look, class unrecognised" — never
+as no look at all. A missing `look` on an entry flagged `needs_a_look` is an entry written before
+the field existed: read it as `flagged`.
 
 ## Consumer rules
 
@@ -108,6 +149,35 @@ own `kind`, not by a flag.
 - Never delete an entry; `departed` marks absence.
 - When writing, preserve identity fields you didn't re-derive (`first_seen`, `rename_history`,
   `original_name`), write atomically, and bump `generated_at`.
+- **A `stem` pairing is sticky; a `stem_near` one is provisional.** Carry the previous pass's
+  `convert_candidate` forward and re-confirm it by `id`: for a **confident** (`stem`) pairing, that
+  is the whole check — if the content is still in the folder the pairing holds whatever either file
+  is now called, which is what stops the first descriptive rename (including the ones this system's
+  own medium-depth curation performs) from re-flagging a converted file for ever. A **weak**
+  (`stem_near`) pairing is different: the entry is still `unconverted`, so the search **runs again
+  every pass** and a real export appearing later upgrades the pairing. And a confident pairing whose
+  `id` is **no longer in the folder** falls back to the search too — that is the ordinary re-export
+  (the owner edits the document and exports again, so the export's content, and therefore its id,
+  changes). Re-confirmation is a shortcut past the search, never a replacement for it. Skipping the search while a
+  weak candidate survives is the trap — the owner exports `Report.pdf` in answer to the flag, the
+  stale `Report draft.pdf` is still present, and the flag never clears.
+- **Every free-text field a model produced is guarded before it is written — the list is the whole
+  list.** `title`, `summary`, `key_facts`, `look_reason`, `parties` and each `connections[].relation`
+  come from a model that has just read the document — `connections[].relation` whoever wrote it,
+  the understanding pass or the reduce pass that revised it — and this file is the source of truth
+  *and* travels with the parcel — a number scrubbed only in `AUDIT.md` is a number the manifest still
+  hands to whoever opens it next. `parties` and `relation` are the easy ones to forget and the ones
+  a model most naturally qualifies ("… — account 12345678"), so name them explicitly rather than
+  relying on "the free-text fields". The `reference_numbers` list is the typed exception: it is a
+  field the schema wants populated, so it passes at the depth the folder declared rather than being
+  scrubbed blind. Two kinds of model text never land in this file and are guarded at the same
+  crossing regardless — what a producer only *derives* from (a filename part like `detail`), and
+  what it emits **past** the manifest into a raised-item ledger (an escalation's `item`, `reason`,
+  `what_would_resolve`, `owner_action`, `proposed_action` — `owner_action` included, and it is the
+  one most likely to name an identifier, since it tells a person which account or document to go
+  and find). The ledger is read by people and by later runs; a number
+  that reaches it has left the system just as surely. See the framework rule and the guard's four
+  properties in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
 - `AUDIT.md` is derived; regenerate it from the manifest rather than editing it.
 
 ## Shared contracts

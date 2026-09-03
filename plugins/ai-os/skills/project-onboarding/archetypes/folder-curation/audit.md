@@ -26,8 +26,25 @@ Per entry, on top of the scan contract's own fields:
   name and by duplicate groups spanning two trees. Recorded as a pair id on every participating
   entry (`overlap`), with the file count on each side.
 - **Generic names** — a stem that is a device or scanner default (`generic_name`), counted per folder.
-- **Unconverted formats** — an `iwork` or other proprietary file with no converted sibling
-  (`unconverted`), counted per class and per folder, never per run.
+- **Unconverted formats** — an `iwork` or other proprietary file for which no export could be
+  confidently matched (`unconverted`), counted per class and per folder, never per run. The match is
+  on the **normalised stem across the whole folder**, not the same-folder sibling: exports live one
+  folder over and under modified names, and a false `unconverted` becomes a `convert` row that makes
+  a second export. Candidates are ranked **same folder, then nearest common ancestor, then closest
+  modification time**, and an export is **claimed once** — one export cannot convert three files, or
+  a single recent export clears the flag on every year of an archive that shares its stem. Match
+  strength then decides the flag: an identical normalised stem clears it (the file is converted; the
+  pairing is still recorded in `convert_candidate`), a stem that agrees only after a modifier is
+  folded out leaves it set *with* the candidate named, and no match at all leaves it set with no
+  candidate. A **confident** pairing is carried forward and re-confirmed by the export's **content
+  id** rather than its name — this pass recomputes from disk every run, so a pairing held by name
+  dies at the first rename and the file is re-flagged for ever. That re-confirmation is a shortcut
+  past the search, not a replacement: when the recorded id is no longer in the folder — the ordinary
+  re-export gives the export new bytes — the search runs again. A **weak** pairing is provisional
+  either way: re-run the search every pass, so the export the owner makes in answer to the flag is
+  found. The comparison stays on names and timestamps: a content-level
+  match would mean opening the format the class policy says cannot be opened, and this pass makes no
+  model call.
 - **Hygiene defects** (`hygiene`, kind in `look_reason`) — leading/trailing whitespace in a name,
   hidden system files, names differing only by case, path components over the filesystem's byte limit.
 - **Root strays** (`root_stray`) — anything at the folder root that is not a declared reserved name.
@@ -52,7 +69,11 @@ never from the clock**, so re-rendering an unchanged manifest is a no-op. Sectio
 8. **Hygiene**
 9. **Live vs closed** — per top-level folder
 10. **Drift since last pass** — omitted only on the first pass, which says so
-11. **Needs a look** — findings a person must judge, each with its reason
+11. **Needs a look** — findings a person must judge, grouped by **class** and each carrying its
+    reason. Every class this pass emits is *computed* — read from the flags and fields the walk set,
+    never inferred from a phrase — so the counts do not depend on wording, and a file with several
+    defects appears under each. One concern is one finding: a condition that holds for forty files
+    is one entry with forty pieces of evidence, not forty entries.
 
 **Every section prints its count, including zero.** A sweep that saw nothing and a healthy folder
 must never read alike; a section that renders nothing at all is indistinguishable from a section that

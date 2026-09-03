@@ -77,7 +77,10 @@ Confirm the proposal and fill the gaps with **3–5 questions**, not a questionn
 - **What will you ask this wiki?** The questions they expect to answer from it shape which pages and
   fields matter (e.g. "when does anything expire?", "what do we owe whom?").
 - **What's sensitive?** How to handle identifiers and private data (a sound default: record account /
-  document / licence numbers as the **last 4 digits only**, never in full).
+  document / licence numbers as the **last 4 digits only**, never in full). Record the answer where
+  the deployment can *compile* it — paths excluded outright become the gate's exclude list, per-domain
+  depths become the redaction guard's settings. An answer that lives only in prose is a preference a
+  model is asked to honour, not a control.
 - **Per domain, what triggers an update?** Which kind of incoming document touches which page — this
   becomes the Schema's routing table.
 - **Cadence & conventions** — how often it's maintained, and any existing naming/structure to honour.

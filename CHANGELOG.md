@@ -4,6 +4,80 @@ Releases are semver tags (`vMAJOR.MINOR.PATCH`); what counts as a breaking chang
 the versioned interface in [`AGENTS.md`](AGENTS.md). Consumers pin a tag and advance it
 deliberately.
 
+## v6.6.0 — 2026-09-03
+
+A **MINOR** for `ai-os`, from a real preprocessing run over a family backlog. Six findings, each
+about the seam between a model's answer and what the system does with it — none about the reasoning
+itself.
+
+- **A redaction guard where the answers cross into the deterministic side** (`ARCHITECTURE.md`,
+  new section; `file-preprocessing` step 8): the last-4 rule and the sensitivity depths were only
+  ever *prompt instructions*, and a model holding the document quotes the number it was told not to.
+  They are now a deterministic guard with four stated properties — at the crossing rather than
+  inside a model call *or* at each write (a filename built from an unguarded field puts the number
+  on the filesystem before any write-time guard sees it), typed targets rather than a digit hunt
+  (`reference_numbers` is a field the schema wants populated), every redaction counted and reported,
+  and outright exclusion enforced by the gate rather than the guard. The guarded set is *named*
+  rather than gestured at — `parties` and each `connections[].relation` included, being the two a
+  guard written from memory omits and the two a model most naturally qualifies with the number it
+  just read, alongside the text of anything the run *raises* — `owner_action` above all, since
+  naming which account to go and find is exactly what it is for, and the ledger it lands in is read
+  by people and by later runs. The chain from the curation interview's answer to the enforcement point
+  is stated end to end; the four prompt templates that carried the rule now point at it instead of only asserting
+  it.
+- **A chunked reasoning step's answers are reconciled before any is applied** (`ARCHITECTURE.md`,
+  `file-preprocessing`): near-identical inputs are where a model returns one answer for two files or
+  a path it tidied on the way out. A missing answer is visible and retryable; an answer attached to
+  the *wrong* file is a confident, well-formed, undetectable error. Answers are matched by an
+  engine-issued id, the returned set must equal the requested set exactly, and a chunk that fails is
+  **retried halved, never applied in part**.
+- **An escalation's key is the subject, not the file it was found in** (`ARCHITECTURE.md`): keyed by
+  path, one concern about an entity mints one item per file that mentions it — eighty documents,
+  eighty items, one answer between them. The lifecycle now names the per-*file* version of the
+  re-raise defect it already closed for the per-*run* one, and requires a batch pass to answer from
+  its own batch before raising the residue. `file-preprocessing`'s reduce step and `curate` both
+  collapse repeated questions this way.
+- **A closed `look` vocabulary** (manifest schema `look` field, both producers): the class is a
+  value the engine routes on, the reason stays free text a person reads. A class recovered by
+  keyword from a model's sentence makes "the same defect" a function of phrasing. Computed classes
+  are never model-selected, and never duplicated into `look` either — `file-preprocessing` leaves
+  the model only `flagged` (its other three classes are the engine's verdicts, and a file lands in
+  exactly one look folder), while `folder-curation` keeps `look` for its three judgements —
+  `misfiled`, `credentials`, `flagged` — classifying the escalations `curate` returns (the ones
+  that feed the raised-item ledger), not `move-plan.csv` rows and not manifest entries, since only
+  its deterministic `audit` writes the manifest. Curation's computed findings co-occur on one file
+  and stay on the flags and fields the walk already sets.
+- **The read ladder is a cost ladder, and a rung is checked against the material's languages**
+  (`file-preprocessing`): descend only as far as a file needs, record the tier each file was read
+  at, and treat an empty extraction from a file that should have text as a **capability gap to
+  report** rather than a verdict about the document — a recogniser without the folder's script
+  installed silently produces "unrecognisable" documents a person reads at a glance. The two model
+  stages have opposite economics (per-file and high-volume vs whole-batch and strongest), so routing
+  is declared per stage where a deployment can.
+- **`unconverted` matches across the whole folder, not the same-folder sibling** (`folder-curation`,
+  schema `convert_candidate`): exports live one folder over and under modified names, and a false
+  `unconverted` becomes a `convert` row that makes a second export. Match *strength* now decides the
+  flag — an identical normalised stem clears it, a stem that agrees only after a modifier is folded
+  out leaves it set with the candidate named so a `convert` row points at what it doubts, and no
+  match leaves it set with no candidate. A *confident* pairing is recorded and re-confirmed by the
+  export's **content id**, so it survives the first descriptive rename — including the ones
+  medium-depth curation itself performs; a *weak* one stays provisional and re-searches every pass,
+  so the export the owner makes in answer to the flag is actually found. Candidates rank by same
+  folder → nearest common ancestor → closest mtime, and an export is claimed once, so a single
+  recent export cannot clear the flag across every year of an archive that shares its stem. The
+  match stays deterministic: a content-level comparison would mean opening the format the class
+  policy says cannot be opened.
+
+`extraction` gains an optional `tier`, naming the rung of the read ladder that produced the text so
+a run's spend can be attributed — `none` when no rung produced any, which is an outcome to count
+rather than an absence. `file-preprocessing` also stops claiming Understand is its only
+non-deterministic step: the whole-batch planning call and reduce are model calls too, and the guard
+step is written against all three.
+
+Additive throughout: no skill renamed or removed, no placeholder introduced or made required. The
+new `look` and `convert_candidate` fields are optional, and the `look` vocabulary is extensible the
+way flags are — a consumer ignores a value it does not know.
+
 ## v6.5.0 — 2026-09-01
 
 A **MINOR** for `ai-os`: a new skill and archetype for the folder that sits between

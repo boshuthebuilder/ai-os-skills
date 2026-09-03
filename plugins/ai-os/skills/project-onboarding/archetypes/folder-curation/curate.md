@@ -65,6 +65,20 @@ Anything you cannot place with confidence is a **`needs_a_look`**, not a guessed
 - **Every escalation is decidable in one step.** Each `needs_a_look` carries a `what_would_resolve` —
   one sentence naming the single decision that closes it — and, where you can name it, the
   `proposed_action` you would take on a yes. A bare "please check this" is not an escalation.
+- **One concern is one item, however many files carry it.** An unfamiliar party, an unrecognised
+  account, a folder whose purpose you cannot tell — ask once, key the item on that subject, and list
+  the files as its evidence. Forty items with one answer between them buries the findings that
+  differ. You see the whole audit at once, so you are the step that can tell a repeated question
+  from a real one.
+- **Classify with the vocabulary, explain in the reason.** Each item in the `needs_a_look` array
+  carries a `look` class, and there are exactly three: `misfiled` (this file's home is wrong),
+  `credentials` (this looks like a secret the owner may want excluded outright), and `flagged` for
+  every other judgement — an unfamiliar party, an unrecognised account, a folder whose purpose you
+  cannot tell. Say which in `look` and why in `reason`; never invent a fourth class or a phrase in
+  place of one. This is separate from a **row's** `needs_a_look` column, which is free text saying
+  why that particular move wants the owner's judgement. And the audit's own findings (duplicates,
+  strays, generic names, unconverted formats, hygiene) are already computed and on the entries — do
+  not re-raise them as items.
 - **Do not re-raise a known item.** The gather report's `previously_raised` ledger lists what has
   already been surfaced, each with a status: **open** and **dismissed** items you must not repeat —
   reference them instead; a **recently-resolved** item you may reopen only if its evidence has since
@@ -80,7 +94,7 @@ Return JSON only:
   "verdict": "propose | skip",
   "move_plan": [{"seq": 1, "domain": "...", "depth": "light", "action": "move", "from": "...", "to": "...", "evidence": "<sha256>", "reason": "...", "kind": "", "sweep": "", "needs_a_look": ""}],
   "later_rounds": [{"depth": "medium", "summary": "one line — what a deeper round would resolve"}],
-  "needs_a_look": [{"item": "...", "reason": "...", "owner_action": "null, OR one sentence naming the act only the owner can perform", "what_would_resolve": "one sentence — the single decision that closes this", "proposed_action": "optional — what you would do on a yes"}],
+  "needs_a_look": [{"item": "...", "look": "misfiled | credentials | flagged", "evidence": ["<sha256>", "..."], "reason": "...", "owner_action": "null, OR one sentence naming the act only the owner can perform", "what_would_resolve": "one sentence — the single decision that closes this", "proposed_action": "optional — what you would do on a yes"}],
   "log_entry": "## [{date}] curate | ..."
 }
 ```

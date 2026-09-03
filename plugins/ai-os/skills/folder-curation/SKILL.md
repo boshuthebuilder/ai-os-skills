@@ -104,7 +104,48 @@ moves, spot edited files and strays, flag departed entries), then compute what a
 - **Generic names**: files whose stem is a device or scanner default (`IMG_`, `Scanned Document`,
   `Screenshot`, `document`, chat-export prefixes), counted per folder.
 - **Unreadable-by-design formats**: proprietary office formats, medical imaging, bundled software,
-  camera originals, message files, counted per class and per folder; never flagged per run.
+  camera originals, message files, counted per class and per folder; never flagged per run. A
+  proprietary file is `unconverted` only when **no export of it can be confidently matched**, and
+  the search is wider than the obvious one: people export to a sibling folder, to an outputs folder,
+  and under a modified name ("… final", "… signed", a date appended). Matching only `X.pages`
+  against `X.pdf` in the same folder therefore reports as unconverted a document that was converted
+  years ago — and the plan's answer to that is a `convert` row that makes a *second* export. So
+  match on the **normalised stem across the whole folder** (case, punctuation, whitespace and a
+  short modifier list folded out), and let the strength of the match decide the flag. Two
+  constraints keep "the whole folder" from over-reaching, and an archive of yearly folders is what
+  needs them — `2022/Statement.numbers`, `2023/Statement.numbers` and one `2024/Statement.pdf` all
+  share a stem:
+  - **Nearest wins, and the order is fixed**: same folder, then the nearest common ancestor
+    (fewest directory hops), then — only among candidates equally near — the one whose modification
+    time is closest to the proprietary file's. A rule that says merely "break ties by mtime" leaves
+    the direction to the implementer, and two conforming engines then disagree.
+  - **An export is claimed once.** One export cannot convert three files; it pairs with the nearest
+    claimant and the rest keep their `unconverted` flag. Without this, a single 2024 export clears
+    the flag on every year in the archive and silently suppresses the rows that were right.
+
+  With those, the flag falls out of the match:
+  - a **confident** match (the normalised stems are identical) means the file *is* converted:
+    **no `unconverted` flag**, and the pairing recorded on the entry (`convert_candidate`,
+    `match: stem`). Record it by the export's **content id**, not its path, and re-confirm it by
+    that id on every later pass — a shortcut past the search, not a replacement for it: if that
+    content has left the folder (the ordinary re-export, where the owner edits the document and
+    exports again, giving the export new bytes and a new id) the search simply runs again. The
+    shortcut earns its place because the audit recomputes from disk
+    each run, so a pairing held by name is undone by the first descriptive rename — including the
+    ones this skill's own medium depth performs through `file-preprocessing` — and the file is
+    re-flagged `unconverted` for ever after, proposing an export that already exists;
+  - a **weak** match (the stems agree only after a modifier is folded out) stays `unconverted`, but
+    with the candidate named — a `convert` row must point at the file it believes is not the export,
+    so the owner declines in one look instead of re-deriving the question. A weak pairing is
+    **provisional, never sticky**: the search runs again every pass, because the owner's usual
+    answer to the flag is to make the real export, and a rule that stops searching while the old
+    near-miss survives would leave the flag up for ever;
+  - **no** match at all is `unconverted` with no `convert_candidate`: the plain case the flag was
+    always for.
+
+  **Stay deterministic**: this pass makes no model call, and comparing a proprietary bundle's
+  *contents* to a PDF would need to open the format the class policy says cannot be opened. If a
+  content-level comparison is ever wanted, it belongs in `curate`, which already reads.
 - **Hygiene defects**: trailing or leading whitespace in a name, hidden system files, names that
   differ only by case, path components over the filesystem's byte limit, obvious misspellings the
   owner may confirm.
@@ -113,6 +154,20 @@ moves, spot edited files and strays, flag departed entries), then compute what a
 - **Drift since the last pass** (from the second run on): added, removed, moved (same hash, new
   path: adopted, not flagged), edited (same path, new hash), new duplicate groups, new root strays,
   new files landing in an overlapping home.
+
+**Every finding is a class, never a phrase**, and the free-text reason explains rather than
+classifies. The audit's sections, the review lists and the plan's grouping are all derived from the
+class, so it has to be a value: recovered by keyword from a sentence, "the same defect" is whatever
+the wording happened to be that pass, and two identical files land in different sections. The
+audit's own findings are **computed, never chosen by a model**, and they are carried by the flags
+and fields the walk already sets — `root_stray`, `generic_name`, `unconverted`, `hygiene`,
+`overlap`, `copies[].kind` — which is also why a file can hold several at once without anything
+having to choose between them. The `look` classes are `curate`'s three *judgements* — `misfiled`,
+`credentials`, `flagged` — and they classify the **escalations** it returns, the ones that feed the
+raised-item ledger; not the rows of `move-plan.csv` (whose own `needs_a_look` column is free text
+saying why a row wants judgement), and not manifest entries, which only the deterministic `audit`
+writes here. The vocabulary and its extension rule are in
+[`manifest-schema.md`](../file-preprocessing/references/manifest-schema.md).
 
 Render `AUDIT.md` from the manifest as a pure function of the manifest (no clock; stamped from the
 manifest's own `generated_at`). Every section carries its count **even when the count is zero**: a
@@ -133,9 +188,19 @@ Show the audit, then ask, in this order, and record every answer in the rulebook
 5. **Which formats are working formats**, and whether the owner will convert or export them.
 6. **What is sensitive** beyond the last-4 rule: paths to exclude outright (credentials), and
    domains to index at reduced depth (administration-only for a legal matter, dates-only for
-   health). Recorded as a decision, so later passes never re-raise it.
+   health). Recorded as a decision, so later passes never re-raise it — and **compiled into the job
+   config, not left in prose**: the exclusions become the deterministic `exclude` list the gate
+   applies before a model sees anything, and the depths become the redaction guard's settings on
+   what a model returns. A depth that lives only in a rulebook sentence is a preference a model is
+   asked to honour;
+   the two enforcement points are in [`ARCHITECTURE.md`](../../ARCHITECTURE.md), and they are
+   different failures — the gate cannot stop a summary from quoting a number, and the guard cannot
+   un-read a credentials file.
 7. **Where AI outputs already sit** beside the sources, so the plan can relocate them.
-8. **Language and naming** for renamed files and folders, where the material is bilingual.
+8. **Language and naming** for renamed files and folders, where the material is bilingual — and the
+   **names each person and organisation appears under**, every script and nickname included. The
+   rulebook carries that alias list, and `file-preprocessing` is handed it in in-place mode, so a
+   folder that has answered "who is this" once is not asked again per file.
 
 ### 3. Propose (the only model step)
 
@@ -159,8 +224,12 @@ From the audit and the answers, emit a **move-plan** (schema:
 - **Never invent a taxonomy.** The owner's shape stays; the plan resolves conflicts inside it. A
   full re-taxonomy is a depth the owner must choose, and even then it is proposed as a mapping from
   every existing folder, never as a blank target tree.
-- Anything the model cannot place with confidence is a `needs_a_look` with a `what_would_resolve`,
-  not a guessed row.
+- Anything the model cannot place with confidence is a `needs_a_look` — a `look` class, a
+  `what_would_resolve`, and the evidence — not a guessed row. **One concern is one item, however
+  many rows it touches**: an unfamiliar party, an unrecognised account, a folder whose purpose is
+  unclear is asked once with its files as evidence, never once per file. The plan sees the whole
+  folder at once, so it is the step that can tell a repeated question from a real one; the lifecycle
+  rule is in [`ARCHITECTURE.md`](../../ARCHITECTURE.md).
 
 ### 4. Approve
 

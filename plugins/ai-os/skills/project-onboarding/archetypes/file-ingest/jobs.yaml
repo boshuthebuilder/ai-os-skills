@@ -20,7 +20,14 @@ jobs:
     #                            # then set a clear margin above observed spend. A run that hits the cap
     #                            # must end as an explicit `budget_exceeded` outcome (fail loud) — never a
     #                            # silent truncation; absent means the deployment default.
-    # compatible_models: [...]   # optional: which model backends this job may use
+    # compatible_models: [...]   # optional: which model backends this job may use. A job that reasons
+    #                            # more than once (a per-item pass over a batch, then one pass over the
+    #                            # whole batch's results) declares this PER STAGE where the deployment
+    #                            # can: the per-item stage is small-context and high-volume and belongs
+    #                            # on the cheapest backend that clears the bar, while the whole-batch
+    #                            # stage needs the strongest reasoning. Routing the whole job at the
+    #                            # stronger tier pays the per-item volume at that price — a choice
+    #                            # worth making deliberately rather than by default.
     # timeout_seconds: 600       # optional: per-run cap
 
   - id: reconcile
